@@ -1,0 +1,78 @@
+{
+  "theme": "dark",
+  "archetype": "THE PERFORMANCE PRO / COMMAND CENTER",
+  "project_name": "MahaFlow - Live Crowd Intelligence & Transit Management Platform",
+  "branding": {
+    "logo_url": "https://customer-assets-39nsmqrw.emergentagent.net/job_mahaflow-prod/artifacts/3luj9wo5_ChatGPT%20Image%20Sep%2010%2C%202026%2C11_56_57%20PM.png",
+    "motto": "Real-time Crowd Analytics, CCTV Surveillance & Transport Operations for Maharashtra Transit",
+    "style": "Command Center Tactical Glass & High-Density Radar Aesthetics"
+  },
+  "typography": {
+    "heading_font": "Outfit, sans-serif",
+    "body_font": "Inter, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "h1": "text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight",
+    "h2": "text-2xl sm:text-3xl font-bold tracking-tight",
+    "h3": "text-xl sm:text-2xl font-semibold",
+    "h4": "text-lg font-medium",
+    "body": "text-sm sm:text-base leading-relaxed text-slate-300",
+    "small": "text-xs font-mono tracking-wider uppercase"
+  },
+  "colors": {
+    "background": "#0B0F17",
+    "surface": "#111827",
+    "surface_elevated": "#1F2937",
+    "surface_border": "#374151",
+    "primary": "#3B82F6",
+    "primary_hover": "#2563EB",
+    "accent_orange": "#F97316",
+    "accent_green": "#10B981",
+    "accent_red": "#EF4444",
+    "accent_purple": "#8B5CF6",
+    "text_primary": "#F9FAFB",
+    "text_secondary": "#9CA3AF",
+    "text_muted": "#6B7280",
+    "glass_bg": "rgba(17, 24, 39, 0.8)",
+    "glass_border": "rgba(255, 255, 255, 0.08)"
+  },
+  "component_path": "src/components/",
+  "grids": {
+    "dashboard_mode": "High Density Bento Mode B",
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6",
+    "card_padding": "p-5 md:p-6"
+  },
+  "image_urls": [
+    {
+      "category": "cctv_streams",
+      "description": "Bus Terminal Platform 1 CCTV Stream",
+      "url": "https://images.unsplash.com/photo-1523268266866-5dbd36907f00?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    {
+      "category": "cctv_streams",
+      "description": "Railway Station Concourse Stream",
+      "url": "https://images.unsplash.com/photo-1696545720052-b2c622c058b5?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    {
+      "category": "cctv_streams",
+      "description": "Bus Bay Interior Surveillance Stream",
+      "url": "https://images.unsplash.com/photo-1514954286145-20b13ea8c01b?crop=entropy&cs=srgb&fm=jpg&q=85"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Ensure complete responsive layouts for Passenger, Authority, and Developer role portals.",
+    "Implement real Google Auth + Email/Password onboarding wizard for Authority role.",
+    "Post-auth verification step must accept access codes (e.g. MS-PUNE-BUS-01, CR-MUM-RLY-02) and automatically resolve state, facility type (Bus Stand vs Railway Station), and locked facility location.",
+    "Allow adding multiple real CCTV camera streams with active status, RTSP/HLS stream URLs, and camera name inputs.",
+    "Implement Settings section for Passenger (Profile, Saved Routes, Notifications), Authority (Basic System Config, Operating Hours, Staff Alerts), and Developer (Advanced API Keys, YOLO26n AI Worker Connection, Database RLS Debugger, System Logs).",
+    "Transport Registry in Authority portal must allow adding/editing real Bus and Train schedules, vehicle numbers, driver IDs, and occupancy statuses.",
+    "Prepare architecture for YOLO26n AI Worker model integration: display live FPS, detection bounding box overlays on CCTV feeds, model latency metrics, and real vs predicted crowd status badges.",
+    "Integrate real Google Maps JS API container or iframe embedded view with live crowd heatmaps and station markers.",
+    "All interactive elements must include explicit data-testid attributes (e.g., data-testid=\"authority-login-google-btn\", data-testid=\"cctv-add-stream-button\")."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": {
+    "contrast": "Always maintain high contrast against dark backgrounds (#0B0F17 / #111827). Ensure no dark grey text on dark backgrounds.",
+    "hover_states": "Hover states must explicitly set text colors, e.g. hover:bg-blue-600 hover:text-white.",
+    "data_testid": "Mandatory on all buttons, inputs, links, tabs, and interactive elements using kebab-case.",
+    "no_placeholders": "Do not render 'Under Construction' or empty boxes. Populate all data grids, CCTV panels, transport tables, and maps with rich, actionable UI components."
+  }
+}
