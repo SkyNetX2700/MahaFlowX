@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "MahaFlow"
+description = "A passenger mobility workspace for discovering verified bus and rail services, viewing routes from origin to destination, and checking live crowd information."
+version = "1.0.0"
+id = "artifacts/mahaflow"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24606
+
+[services.development]
+run = "pnpm --filter @workspace/mahaflow run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/mahaflow", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/mahaflow/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24606"
+BASE_PATH = "/"
