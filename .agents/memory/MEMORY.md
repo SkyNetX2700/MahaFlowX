@@ -1,1 +1,2 @@
 - [Imported repository handoff](imported-repository-handoff.md) — post-transition repository files may be preserved under `.local/conversation-workspace/files`.
+- [Vercel serverless TypeScript](vercel-serverless-types.md) — standalone API functions may need local runtime declarations when root TS config omits Node/DOM libs.

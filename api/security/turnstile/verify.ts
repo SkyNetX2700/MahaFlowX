@@ -8,6 +8,25 @@ type VercelResponse = {
   json: (body: unknown) => void;
 };
 
+type FetchInit = {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+};
+
+type FetchResponse = {
+  ok: boolean;
+  json: () => Promise<{ success?: boolean }>;
+};
+
+declare const process: {
+  env: {
+    TURNSTILE_SECRET_KEY?: string;
+  };
+};
+
+declare function fetch(url: string, init?: FetchInit): Promise<FetchResponse>;
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ detail: "Method not allowed." });
@@ -28,10 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const body = new URLSearchParams({
-      secret,
-      response: token,
-    });
+    const body = `secret=${encodeURIComponent(secret)}&response=${encodeURIComponent(token)}`;
     const verification = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
