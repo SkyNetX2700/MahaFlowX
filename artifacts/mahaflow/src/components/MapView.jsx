@@ -15,7 +15,9 @@ export default function MapView({ center = { lat: 18.5204, lng: 73.8567 }, label
   const centerLat = Number(center.lat); const centerLng = Number(center.lng);
 
   useEffect(() => {
-    const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY;
+    const key = import.meta.env.VITE_GOOGLE_MAPS_BROWSER_KEY
+      || import.meta.env.REACT_APP_GOOGLE_MAPS_BROWSER_KEY
+      || import.meta.env.GOOGLE_MAPS_BROWSER_KEY;
     if (!key) { setStatus("Google Maps key is not configured"); return undefined; }
     let cancelled = false;
     const previousAuthFailure = window.gm_authFailure;
