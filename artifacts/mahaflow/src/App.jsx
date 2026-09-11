@@ -9,6 +9,8 @@ import { DeveloperWorkspace } from "@/components/workspace/DeveloperWorkspace";
 import { OverviewPage } from "@/components/workspace/OverviewPage";
 import { PassengerWorkspace } from "@/components/workspace/PassengerWorkspace";
 import MapView from "@/components/MapView";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/i18n";
 import { getUserSettings } from "@/lib/supabaseData";
 import { useAuthSession } from "@/hooks/useAuthSession";
 import "@/App.css";
@@ -23,7 +25,24 @@ const navigation = {
 
 const Logo = ({ light = false, testId }) => <BrandLogo light={light} testId={testId}/>;
 
+const navTranslationKeys = {
+  Overview: "nav.overview",
+  "Bus & rail": "nav.busRail",
+  "Crowd map": "nav.crowdMap",
+  "Saved routes": "nav.savedRoutes",
+  Settings: "nav.settings",
+  "Live crowd": "passenger.crowdTitle",
+  "CCTV cameras": "nav.crowdMap",
+  "Transport registry": "nav.busRail",
+  Reports: "nav.overview",
+  "Access codes": "nav.savedRoutes",
+  Authorities: "nav.workspace",
+  Facilities: "nav.crowdMap",
+  Branding: "nav.settings",
+};
+
 const Sidebar = ({ role, page, setPage, theme, setTheme, mobileOpen, setMobileOpen, profile, session, onSignOut }) => {
+  const { t } = useLanguage();
   const RoleIcon = role === "developer" ? Code2 : role === "authority" ? ShieldCheck : UserRound;
   const displayName = profile?.full_name || session.user.email || "MahaFlow user";
   const initials = displayName.split(/\s|@/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "MF";
@@ -31,9 +50,9 @@ const Sidebar = ({ role, page, setPage, theme, setTheme, mobileOpen, setMobileOp
     <div className="sidebar-mobile-head"><Logo testId="sidebar-mobile-logo"/><button className="icon-button" data-testid="mobile-close-button" aria-label="Close workspace navigation" onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
     <div className="desktop-logo"><Logo testId="sidebar-logo"/></div>
     <div className="current-role" data-testid="current-user-role"><RoleIcon size={16}/><span><small>Signed in as</small><b>{role}</b></span><LockKeyhole size={14}/></div>
-    <div className="nav-label">WORKSPACE</div>
-    <nav>{navigation[role].map(([label, Icon]) => <button key={label} className={page === label ? "selected" : ""} onClick={() => { setPage(label); setMobileOpen(false); }} data-testid={`nav-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`}><Icon size={18}/>{label}</button>)}</nav>
-    <div className="sidebar-bottom"><div className="theme-row"><span><Sun size={15}/>Appearance</span><button data-testid="theme-toggle-button" aria-label="Toggle color theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? <Moon size={16}/> : <Sun size={16}/>}</button></div><div className="profile-chip" data-testid="signed-in-user"><div className="avatar">{initials}</div><span><b>{displayName}</b><small>{session.user.email || role}</small></span><button className="icon-button" data-testid="logout-button" aria-label="Sign out" title="Sign out" onClick={onSignOut}><LogOut size={16}/></button></div></div>
+    <div className="nav-label">{t("nav.workspace")}</div>
+    <nav>{navigation[role].map(([label, Icon]) => <button key={label} className={page === label ? "selected" : ""} onClick={() => { setPage(label); setMobileOpen(false); }} data-testid={`nav-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`}><Icon size={18}/>{t(navTranslationKeys[label] || label)}</button>)}</nav>
+    <div className="sidebar-bottom"><LanguageSwitcher className="sidebar-language"/><div className="theme-row"><span><Sun size={15}/>{t("nav.appearance")}</span><button data-testid="theme-toggle-button" aria-label="Toggle color theme" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? <Moon size={16}/> : <Sun size={16}/>}</button></div><div className="profile-chip" data-testid="signed-in-user"><div className="avatar">{initials}</div><span><b>{displayName}</b><small>{session.user.email || role}</small></span><button className="icon-button" data-testid="logout-button" aria-label={t("nav.signOut")} title={t("nav.signOut")} onClick={onSignOut}><LogOut size={16}/></button></div></div>
   </aside>;
 };
 
@@ -57,9 +76,10 @@ const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
 
 export default function App() {
   const auth = useAuthSession();
+  const { t } = useLanguage();
   const authorityPending = sessionStorage.getItem("mahaflow-authority-onboarding") === "true";
   if (import.meta.env.DEV && window.location.pathname === "/map-health") return <main className="map-health" data-testid="map-health-page"><h1>Google Maps diagnostic</h1><MapView/><p data-testid="map-health-help">This preview-only route uses the same key and component as MahaFlow workspaces.</p></main>;
-  if (auth.loading) return <main className="session-loader" data-testid="session-loading"><Logo testId="session-loader-logo"/><span>Restoring your secure session…</span></main>;
+  if (auth.loading) return <main className="session-loader" data-testid="session-loading"><Logo testId="session-loader-logo"/><span>{t("app.restoring")}</span></main>;
   if (window.location.pathname === "/reset-password") return <ResetPassword session={auth.session} onFinished={() => window.location.reload()}/>;
   if (auth.session && authorityPending && auth.role === "passenger") return <AuthorityOnboarding session={auth.session} onComplete={() => auth.applySession(auth.session)} onCancel={auth.signOut}/>;
   if (auth.session && auth.profile?.status && auth.profile.status !== "active") return <main className="access-restricted" data-testid="access-restricted"><ShieldCheck/><h1>Account access paused</h1><p>Your MahaFlow account is {auth.profile.status}. Contact a platform developer for review.</p><button className="outline-button" data-testid="restricted-logout-button" onClick={auth.signOut}>Sign out</button></main>;
