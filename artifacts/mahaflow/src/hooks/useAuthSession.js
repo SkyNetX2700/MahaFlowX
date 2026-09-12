@@ -98,6 +98,7 @@ export const useAuthSession = () => {
         return;
       }
       if (callbackError && !data.session) {
+        sessionStorage.removeItem("mahaflow-authority-onboarding");
         setState({ session: null, profile: null, loading: false, error: decodeURIComponent(callbackError) });
         return;
       }
@@ -112,6 +113,7 @@ export const useAuthSession = () => {
 
   const signOut = useCallback(async () => {
     if (!supabase) return;
+    sessionStorage.removeItem("mahaflow-authority-onboarding");
     await supabase.auth.signOut({ scope: "local" });
     setState({ session: null, profile: null, loading: false, error: "" });
   }, []);

@@ -46,14 +46,18 @@ export const AuthorityAuthModal = ({ onClose, onAuthenticated }) => {
     const response = createAccount
       ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: getAuthRedirectUrl() } })
       : await supabase.auth.signInWithPassword({ email, password });
-    if (response.error) setMessage(response.error.message);
+    if (response.error) {
+      sessionStorage.removeItem("mahaflow-authority-onboarding");
+      setMessage(response.error.message);
+    }
     else if (response.data.session) await onAuthenticated(response.data.session);
     else setMessage("Confirm your email, then return here to complete authority setup.");
     setBusy(false);
   };
 
+  const close = () => { sessionStorage.removeItem("mahaflow-authority-onboarding"); onClose(); };
   return <div className="modal-backdrop" data-testid="authority-auth-modal"><div className="modal authority-auth-card">
-    <button className="icon-button close" data-testid="authority-auth-close-button" aria-label="Close authority sign in" onClick={onClose}><X size={18}/></button>
+    <button className="icon-button close" data-testid="authority-auth-close-button" aria-label="Close authority sign in" onClick={close}><X size={18}/></button>
     <div className="modal-icon"><KeyRound/></div><span className="eyebrow purple">AUTHORITY ONBOARDING</span>
     <h3>Secure your operator account</h3><p>Sign in first. Your one-time facility code is verified only after authentication.</p>
     <button type="button" className="google-button" data-testid="authority-google-button" disabled={busy || !supabase} onClick={beginGoogle}><span className="google-g">G</span> Continue with Google</button>

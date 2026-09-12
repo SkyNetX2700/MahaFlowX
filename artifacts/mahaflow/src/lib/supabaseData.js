@@ -56,9 +56,10 @@ export const deleteCamera = (id) => result(
   supabase.from("mahaflow_cameras").delete().eq("id", id)
 );
 
-export const listCrowdReadings = ({ ownerId } = {}) => {
+export const listCrowdReadings = ({ ownerId, facilityId } = {}) => {
   let query = supabase.from("mahaflow_crowd_readings").select("*,mahaflow_facilities(name,latitude,longitude)").order("recorded_at", { ascending: false }).limit(40);
   if (ownerId) query = query.eq("owner_user_id", ownerId);
+  if (facilityId) query = query.eq("facility_id", facilityId);
   return result(query);
 };
 

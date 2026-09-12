@@ -138,7 +138,7 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
             <button type="button" className="text-button" data-testid="forgot-password-button" onClick={forgot}>{t("auth.forgotPassword")}</button>
           </div>}
           {mode === "signup" && turnstileSiteKey && <Turnstile key={turnstileKey} siteKey={turnstileSiteKey} options={{ action: "signup" }} onSuccess={setTurnstileToken} onExpire={() => setTurnstileToken("")} onError={() => setTurnstileToken("")} data-testid="turnstile-widget"/>}
-          <button className="primary-button" data-testid="auth-submit-button" disabled={busy}>{busy ? "…" : mode === "signin" ? t("auth.signIn") : t("auth.createAccount")}<ArrowRight size={18}/></button>
+     <button className="primary-button" data-testid="auth-submit-button" disabled={busy}>{busy ? "…" : mode === "signin" ? t("auth.signIn") : t("auth.createAccount")}<ArrowRight size={18}/></button>
         </form>
         <div className="divider"><span>{t("auth.or")}</span></div>
         <button type="button" className="google-button" data-testid="google-signin-button" disabled={busy || !supabase} title={supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")} onClick={google}><span className="google-g">G</span>{supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")}</button>

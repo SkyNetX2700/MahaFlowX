@@ -7,40 +7,11 @@ import { EmptyState, ErrorState, LoadingState, SectionHeader, StatusBadge } from
 import { SettingsPanel } from "@/components/workspace/SettingsPanel";
 import { useLanguage } from "@/i18n";
 
-const fileAsBase64 = file => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onerror = () => reject(new Error("The CCTV frame could not be read."));
-  reader.onload = () => {
-    const image = new Image();
-    image.onerror = () => reject(new Error("The selected file is not a readable image."));
-    image.onload = () => {
-      const maxDimension = 1600;
-      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => {
-        if (!blob) {
-          reject(new Error("The CCTV frame could not be prepared."));
-          return;
-        }
-        const output = new FileReader();
-        output.onload = () => resolve(String(output.result));
-        output.onerror = () => reject(new Error("The CCTV frame could not be prepared."));
-        output.readAsDataURL(blob);
-      }, "image/jpeg", 0.82);
-    };
-    image.src = String(reader.result);
-  };
-  reader.readAsDataURL(file);
-});
-
 const CrowdResult = ({ result }) => (
   <div className="crowd-result" data-testid="crowd-prediction-result">
-    <div><span className="crowd-result-label">AI crowd status</span><StatusBadge value={result.crowd_level}/></div>
+    <div><span className="crowd-result-label">{result.source === "authority" ? "Authority live crowd" : "AI crowd status"}</span><StatusBadge value={result.crowd_level}/></div>
     <strong>{result.crowd_percentage === null ? "—" : `${result.crowd_percentage}%`}</strong>
-    <span>{result.count} people detected · {result.boxes?.length || 0} boxes · {result.crowd_percentage === null ? "Add vehicle capacity for a percentage" : "occupancy"}</span>
+    <span>{result.count} people {result.source === "authority" ? "reported by the authority video" : "detected"} · {result.boxes?.length || 0} boxes · {result.crowd_percentage === null ? "Add vehicle capacity for a percentage" : "occupancy"}</span>
   </div>
 );
 
@@ -73,31 +44,35 @@ const TransportExplorer = ({ session }) => {
     catch (error) { setMessage(error.message); }
   };
 
-  const predict = async (service, event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
+  const predict = async service => {
     setBusyId(service.id); setMessage("");
     try {
-      const response = await fetch("/api/detect", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ image_base64: await fileAsBase64(file), capacity: Number(service.capacity) || undefined }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.detail || "AI crowd prediction failed.");
-      setPrediction(current => ({ ...current, [service.id]: result }));
+      const readings = await listCrowdReadings({ facilityId: service.facility_id });
+      const latest = readings.find(item => item.zone === service.origin || item.zone === service.destination) || readings[0];
+      if (!latest) {
+        throw new Error("The authority video has not published a crowd reading for this service yet.");
+      }
+      setPrediction(current => ({
+        ...current,
+        [service.id]: {
+          source: "authority",
+          count: Number(latest.people_count || 0),
+          boxes: [],
+          crowd_level: latest.crowd_level,
+          crowd_percentage: Number(service.capacity) > 0 ? Math.min(100, Math.round((Number(latest.people_count || 0) / Number(service.capacity)) * 100)) : null,
+        },
+      }));
     } catch (error) { setMessage(error.message); }
     finally { setBusyId(""); }
   };
 
   return <>
-    <SectionHeader eyebrow="PASSENGER · LIVE SEARCH" title="Search" description="Find verified buses and railway services by route, date, and leaving time. Upload a real CCTV frame to predict crowd status."/>
+    <SectionHeader eyebrow="PASSENGER · LIVE SEARCH" title="Search" description="Find verified buses and railway services by route, date, and leaving time. Predict crowd from the latest authority CCTV reading."/>
     <div className="filter-bar route-filter-bar">
       <label className="route-filter-field"><MapPin size={16}/><span><small>{t("passenger.from")}</small><input value={fromQuery} onChange={event => setFromQuery(event.target.value)} data-testid="transport-from-input" placeholder={t("passenger.startingPoint")} aria-label={t("passenger.from")}/></span></label>
       <label className="route-filter-field"><Navigation size={16}/><span><small>{t("passenger.destination")}</small><input value={destinationQuery} onChange={event => setDestinationQuery(event.target.value)} data-testid="transport-destination-input" placeholder={t("passenger.whereGoing")} aria-label={t("passenger.destination")}/></span></label>
-      <label className="route-filter-field"><Clock3 size={16}/><span><small>Date</small><input type="date" value={date} onChange={event => setDate(event.target.value)} data-testid="transport-date-input" aria-label="Travel date"/></span></label>
-      <label className="route-filter-field"><Clock3 size={16}/><span><small>Leaving time</small><input type="time" value={time} onChange={event => setTime(event.target.value)} data-testid="transport-time-input" aria-label="Leaving time"/></span></label>
+       <label className="route-filter-field"><Clock3 size={16}/><span><small>{t("passenger.travelDate")}</small><input type="date" value={date} onChange={event => setDate(event.target.value)} data-testid="transport-date-input" aria-label={t("passenger.travelDate")}/></span></label>
+       <label className="route-filter-field"><Clock3 size={16}/><span><small>{t("passenger.departureTime")}</small><input type="time" value={time} onChange={event => setTime(event.target.value)} data-testid="transport-time-input" aria-label={t("passenger.departureTime")}/></span></label>
       <label className="service-filter-field"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} data-testid="transport-search-input" placeholder={t("passenger.serviceSearch")} aria-label={t("passenger.serviceSearch")}/></label>
       <div className="segmented"><button className={mode === "all" ? "active" : ""} data-testid="transport-filter-all" onClick={() => setMode("all")}>{t("passenger.all")}</button><button className={mode === "bus" ? "active" : ""} data-testid="transport-filter-bus" onClick={() => setMode("bus")}>{t("passenger.bus")}</button><button className={mode === "railway" ? "active" : ""} data-testid="transport-filter-railway" onClick={() => setMode("railway")}>{t("passenger.rail")}</button></div>
     </div>
@@ -106,9 +81,9 @@ const TransportExplorer = ({ session }) => {
     {services.loading ? <LoadingState label={t("common.loading")}/> : services.error ? <ErrorState message={services.error}/> : filtered.length ? <div className="service-list">{filtered.map(service => <article className="service-row detailed-service-row" key={service.id} data-testid={`transport-service-${service.id}`}>
       <div className={`service-mode ${service.mode}`}>{service.mode === "bus" ? <BusFront/> : <TrainFront/>}</div>
       <div className="service-main"><span>{service.service_number}</span><div className="route-path" aria-label={`${t("passenger.from")} ${service.origin} ${t("passenger.to")} ${service.destination}`}><span className="route-point"><small>{t("passenger.from")}</small><b>{service.origin}</b></span><ArrowRight className="route-arrow" size={16}/><span className="route-point"><small>{t("passenger.destination")}</small><b>{service.destination}</b></span></div><small>{service.service_name} · {service.vehicle_registration || "Vehicle details pending"} · Capacity {service.capacity || "not set"}</small></div>
-      <div className="service-time"><span><Clock3 size={14}/><small>Leaves</small><b>{String(service.departure_time || "").slice(0, 5) || "—"}</b></span><span><Clock3 size={14}/><small>Arrives</small><b>{String(service.arrival_time || "").slice(0, 5) || "—"}</b></span><small>{service.bay_or_platform || t("passenger.platformPending")}</small></div>
+       <div className="service-time"><span><Clock3 size={14}/><small>{t("passenger.leaves")}</small><b>{String(service.departure_time || "").slice(0, 5) || "—"}</b></span><span><Clock3 size={14}/><small>{t("passenger.arrives")}</small><b>{String(service.arrival_time || "").slice(0, 5) || "—"}</b></span><small>{service.bay_or_platform || t("passenger.platformPending")}</small></div>
       <StatusBadge value={service.status}/><button className="icon-button" title={t("passenger.saveRoute")} aria-label={`${t("passenger.saveRoute")} ${service.service_number}`} data-testid={`save-route-${service.id}`} onClick={() => save(service)}><Bookmark size={17}/></button>
-      <label className="predict-button"><input type="file" accept="image/*" capture="environment" onChange={event => predict(service, event)} disabled={busyId === service.id}/><span><BrainCircuit size={16}/>{busyId === service.id ? "Scanning…" : "Predict crowd"}</span></label>
+        <button type="button" className="predict-button" onClick={() => predict(service)} disabled={busyId === service.id}><span>{busyId === service.id ? <span className="predicting-state"><span className="loading-ring"/> {t("passenger.predicting")}</span> : <><BrainCircuit size={16}/>{t("passenger.predictCrowd")}</>}</span></button>
       {prediction[service.id] && <CrowdResult result={prediction[service.id]}/>}
     </article>)}</div> : <EmptyState icon={BusFront} title={t("passenger.noMatching")} message={t("passenger.tryDifferent")} testId="transport-empty"/>}
   </>;

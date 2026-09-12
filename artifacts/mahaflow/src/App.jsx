@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { BusFront, Camera, Code2, Eye, KeyRound, LockKeyhole, LogOut, MapPin, Menu, Moon, ShieldCheck, Sparkles, Sun, UserRound, Users, X, BrainCircuit } from "lucide-react";
+import { BusFront, Camera, Code2, KeyRound, LockKeyhole, LogOut, MapPin, Menu, Moon, ShieldCheck, Sparkles, Sun, UserRound, Users, X, BrainCircuit } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { AuthorityOnboarding } from "@/components/auth/AuthorityOnboarding";
 import { ResetPassword } from "@/components/auth/ResetPassword";
 import { AuthorityWorkspace } from "@/components/workspace/AuthorityWorkspace";
 import { DeveloperWorkspace } from "@/components/workspace/DeveloperWorkspace";
-import { OverviewPage } from "@/components/workspace/OverviewPage";
 import { PassengerWorkspace } from "@/components/workspace/PassengerWorkspace";
 import MapView from "@/components/MapView";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -19,24 +18,23 @@ import "@/Workspace.css";
 
 const navigation = {
   passenger: [["Search", BusFront], ["AI crowd prediction", BrainCircuit], ["Crowd map", Users], ["Saved routes", MapPin], ["Settings", Sun]],
-  authority: [["Overview", Eye], ["Live crowd", Users], ["CCTV cameras", Camera], ["Transport registry", BusFront], ["Reports", Sparkles], ["Settings", Sun]],
-  developer: [["Overview", Eye], ["Access codes", KeyRound], ["Authorities", ShieldCheck], ["Facilities", MapPin], ["Branding", Sparkles], ["Settings", Sun]],
+  authority: [["Live monitoring", Users], ["CCTV cameras", Camera], ["Transport registry", BusFront], ["Reports", Sparkles], ["Settings", Sun]],
+  developer: [["Access codes", KeyRound], ["Authorities", ShieldCheck], ["Facilities", MapPin], ["Branding", Sparkles], ["Settings", Sun]],
 };
 
 const Logo = ({ light = false, testId }) => <BrandLogo light={light} testId={testId}/>;
 
 const navTranslationKeys = {
-  Overview: "nav.overview",
   Search: "nav.search",
   "AI crowd prediction": "nav.aiPrediction",
   "Crowd map": "nav.crowdMap",
   "Saved routes": "nav.savedRoutes",
   Settings: "nav.settings",
-  "Live crowd": "passenger.crowdTitle",
+  "Live monitoring": "passenger.liveMonitoring",
   "CCTV cameras": "nav.crowdMap",
   "Transport registry": "nav.busRail",
   Reports: "nav.overview",
-  "Access codes": "nav.savedRoutes",
+  "Access codes": "nav.codes",
   Authorities: "nav.workspace",
   Facilities: "nav.crowdMap",
   Branding: "nav.settings",
@@ -58,7 +56,7 @@ const Sidebar = ({ role, page, setPage, theme, setTheme, mobileOpen, setMobileOp
 };
 
 const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
-  const [page, setPage] = useState(role === "passenger" ? "Search" : "Overview"); const [theme, setTheme] = useState("light"); const [mobileOpen, setMobileOpen] = useState(false);
+  const [page, setPage] = useState(role === "passenger" ? "Search" : role === "authority" ? "Live monitoring" : "Access codes"); const [theme, setTheme] = useState("light"); const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => { getUserSettings(session.user.id).then(settings => { if (settings?.theme) setTheme(settings.theme); }).catch(() => {}); }, [session.user.id]);
   useEffect(() => { const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches); document.documentElement.classList.toggle("dark", dark); }, [theme]);
   const pageProps = { page, session, profile, theme, setTheme };
@@ -67,10 +65,9 @@ const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
     {mobileOpen && <button className="sidebar-scrim" data-testid="mobile-navigation-scrim" aria-label="Close workspace navigation" onClick={() => setMobileOpen(false)}/>} 
     <main className="workspace-main"><div className="mobile-top"><Logo testId="workspace-mobile-logo"/><button className="icon-button" data-testid="mobile-menu-button" aria-label="Open workspace navigation" onClick={() => setMobileOpen(true)}><Menu/></button></div>
       {profile?.facility_id && <div className="facility-chip" data-testid="assigned-facility"><MapPin size={14}/>Facility access is code-locked</div>}
-      {page === "Overview" && <OverviewPage role={role} session={session} onNavigate={setPage}/>} 
-      {page !== "Overview" && role === "passenger" && <PassengerWorkspace {...pageProps}/>} 
-      {page !== "Overview" && role === "authority" && <AuthorityWorkspace {...pageProps}/>} 
-      {page !== "Overview" && role === "developer" && <DeveloperWorkspace {...pageProps}/>} 
+      {role === "passenger" && <PassengerWorkspace {...pageProps}/>} 
+      {role === "authority" && <AuthorityWorkspace {...pageProps}/>} 
+      {role === "developer" && <DeveloperWorkspace {...pageProps}/>} 
     </main>
   </div>;
 };

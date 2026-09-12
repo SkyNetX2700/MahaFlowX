@@ -45,7 +45,10 @@
 .detailed-service-row .service-time span svg{color:#6677a0}
 .detailed-service-row .service-time small{font-size:8px}
 .predict-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:linear-gradient(110deg,#1767d8,#7650c9);border-radius:6px;padding:8px 10px;font-size:10px;font-weight:800;white-space:nowrap}
-.predict-button input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.predict-button{border:0;font:inherit}
+.predict-button:disabled{opacity:.6;cursor:wait}
+.predicting-state{display:flex;align-items:center;gap:7px}
+.loading-ring{width:13px;height:13px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite}
 .predict-button span{display:flex;align-items:center;gap:6px}
 .predict-button:has(input:disabled){opacity:.6;cursor:wait}
 .crowd-result{grid-column:2 / -1;display:flex;align-items:center;gap:14px;padding:11px 13px;background:#f2f7ff;border:1px solid #dbe8fb;border-radius:7px}
@@ -66,6 +69,19 @@
 .dark .crowd-result{background:#172b50;border-color:#2b456e}
 .dark .crowd-result>strong{color:#d8e5ff}
 .dark .predict-button{color:#fff}
+.authority-list article{cursor:pointer}
+.authority-list article.expanded{background:#f5f8ff}
+.authority-detail{grid-column:1 / -1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:12px 0 0;margin-top:2px;border-top:1px solid #e8edf5}
+.authority-detail span{display:flex;flex-direction:column;gap:4px}
+.authority-detail small{font-size:8px!important;color:#8793a7!important;text-transform:uppercase}
+.authority-detail b{font-size:10px!important;font-weight:700}
+.camera-inference{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 13px 13px}
+.camera-frame-button{font-size:9px;padding:8px 10px;cursor:pointer}
+.camera-frame-button input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.camera-inference-result{display:flex;align-items:center;gap:7px;font-size:10px}
+.camera-inference-result small,.camera-inference-error{font-size:9px;color:#8591a4}
+.camera-inference-error{color:#b64949}
+.loading-ring-dark{border-color:#3567c855;border-top-color:#3567c8}
 .dark .integration-state.connected{background:#123e37}
 .dark .integration-state.warning{background:#493617}
 .dark .integration-state.error{background:#4b2427}
