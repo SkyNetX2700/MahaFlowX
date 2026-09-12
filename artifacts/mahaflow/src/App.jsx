@@ -7,6 +7,8 @@ import { ResetPassword } from "@/components/auth/ResetPassword";
 import { AuthorityWorkspace } from "@/components/workspace/AuthorityWorkspace";
 import { DeveloperWorkspace } from "@/components/workspace/DeveloperWorkspace";
 import { PassengerWorkspace } from "@/components/workspace/PassengerWorkspace";
+import { MahaFlowAI } from "@/components/workspace/MahaFlowAI";
+import { WorkspaceUtilities } from "@/components/workspace/WorkspaceUtilities";
 import MapView from "@/components/MapView";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/i18n";
@@ -17,8 +19,8 @@ import "@/Mobile.css";
 import "@/Workspace.css";
 
 const navigation = {
-  passenger: [["Search", BusFront], ["AI crowd prediction", BrainCircuit], ["Crowd map", Users], ["Saved routes", MapPin], ["Settings", Sun]],
-  authority: [["Live monitoring", Users], ["CCTV cameras", Camera], ["Transport registry", BusFront], ["Reports", Sparkles], ["Settings", Sun]],
+  passenger: [["Search", BusFront], ["MF AI", BrainCircuit], ["AI crowd prediction", BrainCircuit], ["Crowd map", Users], ["Saved routes", MapPin], ["Settings", Sun]],
+  authority: [["Live monitoring", Users], ["MF AI", BrainCircuit], ["CCTV cameras", Camera], ["Transport registry", BusFront], ["Reports", Sparkles], ["Settings", Sun]],
   developer: [["Access codes", KeyRound], ["Authorities", ShieldCheck], ["Facilities", MapPin], ["Branding", Sparkles], ["Settings", Sun]],
 };
 
@@ -27,6 +29,7 @@ const Logo = ({ light = false, testId }) => <BrandLogo light={light} testId={tes
 const navTranslationKeys = {
   Search: "nav.search",
   "AI crowd prediction": "nav.aiPrediction",
+  "MF AI": "nav.mfAi",
   "Crowd map": "nav.crowdMap",
   "Saved routes": "nav.savedRoutes",
   Settings: "nav.settings",
@@ -65,8 +68,10 @@ const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
     {mobileOpen && <button className="sidebar-scrim" data-testid="mobile-navigation-scrim" aria-label="Close workspace navigation" onClick={() => setMobileOpen(false)}/>} 
     <main className="workspace-main"><div className="mobile-top"><Logo testId="workspace-mobile-logo"/><button className="icon-button" data-testid="mobile-menu-button" aria-label="Open workspace navigation" onClick={() => setMobileOpen(true)}><Menu/></button></div>
       {profile?.facility_id && <div className="facility-chip" data-testid="assigned-facility"><MapPin size={14}/>Facility access is code-locked</div>}
-      {role === "passenger" && <PassengerWorkspace {...pageProps}/>} 
-      {role === "authority" && <AuthorityWorkspace {...pageProps}/>} 
+      <WorkspaceUtilities role={role} setPage={setPage}/>
+      {page === "MF AI" && <MahaFlowAI role={role}/>}
+      {role === "passenger" && page !== "MF AI" && <PassengerWorkspace {...pageProps}/>}
+      {role === "authority" && page !== "MF AI" && <AuthorityWorkspace {...pageProps}/>}
       {role === "developer" && <DeveloperWorkspace {...pageProps}/>} 
     </main>
   </div>;

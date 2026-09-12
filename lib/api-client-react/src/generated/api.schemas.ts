@@ -8,12 +8,14 @@
 export interface HealthStatus {
   status: string;
 }
+
 export interface InferenceHealth {
   status: string;
   inference: string;
   model_configured: boolean;
   model_name: string;
 }
+
 export interface DetectionRequest {
   /** Base64-encoded image or data URL containing a real CCTV frame */
   image_base64: string;
@@ -51,5 +53,32 @@ export interface DetectionResponse {
   /** @nullable */
   crowd_percentage: number | null;
   model: string;
+}
+
+export type GeminiChatRequestMessagesItemRole = typeof GeminiChatRequestMessagesItemRole[keyof typeof GeminiChatRequestMessagesItemRole];
+
+
+export const GeminiChatRequestMessagesItemRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export type GeminiChatRequestMessagesItem = {
+  role: GeminiChatRequestMessagesItemRole;
+  /** @maxLength 4000 */
+  content: string;
+};
+
+export type GeminiChatRequestContext = { [key: string]: unknown };
+
+export interface GeminiChatRequest {
+  /** @maxItems 16 */
+  messages: GeminiChatRequestMessagesItem[];
+  context?: GeminiChatRequestContext;
+}
+
+export interface GeminiChatResponse {
+  message: string;
+  assistant: string;
 }
 

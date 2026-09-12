@@ -15,6 +15,8 @@ import * as zod from 'zod';
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
+
+
 /**
  * @summary YOLO worker health
  */
@@ -24,6 +26,8 @@ export const InferenceHealthResponse = zod.object({
   "model_configured": zod.boolean(),
   "model_name": zod.string()
 })
+
+
 /**
  * @summary Detect people in a real CCTV frame
  */
@@ -52,6 +56,29 @@ export const DetectPeopleResponse = zod.object({
   "crowd_level": zod.enum(['Low', 'Medium', 'High']),
   "crowd_percentage": zod.number().nullable(),
   "model": zod.string()
+})
+
+
+/**
+ * @summary Ask MahaFlow AI a transportation question
+ */
+export const chatWithMahaFlowAIBodyMessagesItemContentMax = 4000;
+
+export const chatWithMahaFlowAIBodyMessagesMax = 16;
+
+
+
+export const ChatWithMahaFlowAIBody = zod.object({
+  "messages": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string().max(chatWithMahaFlowAIBodyMessagesItemContentMax)
+})).max(chatWithMahaFlowAIBodyMessagesMax),
+  "context": zod.record(zod.string(), zod.unknown()).optional()
+})
+
+export const ChatWithMahaFlowAIResponse = zod.object({
+  "message": zod.string(),
+  "assistant": zod.string()
 })
 
 

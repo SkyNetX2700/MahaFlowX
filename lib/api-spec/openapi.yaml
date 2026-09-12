@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: inference
     description: Server-side YOLO inference
+  - name: gemini
+    description: MahaFlow AI transportation assistant
 paths:
   /healthz:
     get:
@@ -62,6 +64,30 @@ paths:
           description: Invalid request
         "503":
           description: YOLO model is not configured
+  /gemini/chat:
+    post:
+      operationId: chatWithMahaFlowAI
+      tags: [gemini]
+      summary: Ask MahaFlow AI a transportation question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeminiChatRequest"
+      responses:
+        "200":
+          description: MahaFlow AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiChatResponse"
+        "400":
+          description: Invalid request
+        "429":
+          description: Rate limited
+        "502":
+          description: AI provider unavailable
 components:
   schemas:
     HealthStatus:
@@ -125,4 +151,32 @@ components:
         model:
           type: string
       required: [ok, count, boxes, crowd_level, crowd_percentage, model]
+    GeminiChatRequest:
+      type: object
+      properties:
+        messages:
+          type: array
+          maxItems: 16
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
+                maxLength: 4000
+            required: [role, content]
+        context:
+          type: object
+          additionalProperties: true
+      required: [messages]
+    GeminiChatResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        assistant:
+          type: string
+      required: [message, assistant]
 
