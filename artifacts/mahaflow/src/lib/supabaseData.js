@@ -14,6 +14,14 @@ export const addFacility = (facility) => result(
   supabase.from("mahaflow_facilities").insert(facility).select().single()
 );
 
+export const updateFacility = (id, facility) => result(
+  supabase.from("mahaflow_facilities").update(facility).eq("id", id).select().single()
+);
+
+export const deleteFacility = (id) => result(
+  supabase.from("mahaflow_facilities").delete().eq("id", id)
+);
+
 export const listTransportServices = ({ ownerId } = {}) => {
   let query = supabase.from("mahaflow_transport_services").select("*").order("departure_time");
   if (ownerId) query = query.eq("owner_user_id", ownerId);
@@ -22,6 +30,10 @@ export const listTransportServices = ({ ownerId } = {}) => {
 
 export const addTransportService = (service) => result(
   supabase.from("mahaflow_transport_services").insert(service).select().single()
+);
+
+export const updateTransportService = (id, service) => result(
+  supabase.from("mahaflow_transport_services").update(service).eq("id", id).select().single()
 );
 
 export const deleteTransportService = (id) => result(
@@ -34,6 +46,10 @@ export const listCameras = (ownerId) => result(
 
 export const addCamera = (camera) => result(
   supabase.from("mahaflow_cameras").insert(camera).select().single()
+);
+
+export const updateCamera = (id, camera) => result(
+  supabase.from("mahaflow_cameras").update(camera).eq("id", id).select().single()
 );
 
 export const deleteCamera = (id) => result(

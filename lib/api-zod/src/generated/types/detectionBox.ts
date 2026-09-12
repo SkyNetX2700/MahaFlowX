@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface DetectionBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  confidence: number;
 }

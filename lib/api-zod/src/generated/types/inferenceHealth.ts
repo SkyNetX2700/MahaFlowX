@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface InferenceHealth {
   status: string;
+  inference: string;
+  model_configured: boolean;
+  model_name: string;
 }

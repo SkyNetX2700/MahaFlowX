@@ -38,3 +38,40 @@
   .route-filter-field,.service-filter-field{width:100%}
   .route-search-summary{width:100%;border-radius:8px}
 }
+
+.detailed-service-row{position:relative}
+.detailed-service-row .service-time{display:flex;gap:12px;align-items:flex-start}
+.detailed-service-row .service-time span{display:flex;flex-direction:column;gap:2px}
+.detailed-service-row .service-time span svg{color:#6677a0}
+.detailed-service-row .service-time small{font-size:8px}
+.predict-button{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;background:linear-gradient(110deg,#1767d8,#7650c9);border-radius:6px;padding:8px 10px;font-size:10px;font-weight:800;white-space:nowrap}
+.predict-button input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.predict-button span{display:flex;align-items:center;gap:6px}
+.predict-button:has(input:disabled){opacity:.6;cursor:wait}
+.crowd-result{grid-column:2 / -1;display:flex;align-items:center;gap:14px;padding:11px 13px;background:#f2f7ff;border:1px solid #dbe8fb;border-radius:7px}
+.crowd-result>div{display:flex;align-items:center;gap:9px}
+.crowd-result-label{font-size:9px;color:#687795;text-transform:uppercase;letter-spacing:.7px;font-weight:800}
+.crowd-result>strong{font:600 24px Outfit;color:#0b2a69}
+.crowd-result>span{font-size:10px;color:#6e7e99}
+.form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.camera-facility{margin:0 0 3px}
+.integration-state.connected{background:#e8f8f0;color:#087a59}
+.integration-state.warning{background:#fff5df;color:#9a6810}
+.integration-state.error{background:#ffecec;color:#b64949}
+.integration-state.connected>i{background:#16a476}
+.integration-state.warning>i{background:#e4a229}
+.integration-state.error>i{background:#d75a5a}
+.facility-grid article{min-width:0}
+.facility-grid article .icon-button{flex-shrink:0}
+.dark .crowd-result{background:#172b50;border-color:#2b456e}
+.dark .crowd-result>strong{color:#d8e5ff}
+.dark .predict-button{color:#fff}
+.dark .integration-state.connected{background:#123e37}
+.dark .integration-state.warning{background:#493617}
+.dark .integration-state.error{background:#4b2427}
+
+@media(max-width:760px){
+  .detailed-service-row .service-time{grid-column:2;flex-wrap:wrap}
+  .detailed-service-row .predict-button{grid-column:2;justify-self:start}
+  .crowd-result{grid-column:2 / -1;flex-wrap:wrap}
+}

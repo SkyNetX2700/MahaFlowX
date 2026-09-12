@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BusFront, Camera, Code2, Eye, KeyRound, LockKeyhole, LogOut, MapPin, Menu, Moon, ShieldCheck, Sparkles, Sun, UserRound, Users, X } from "lucide-react";
+import { BusFront, Camera, Code2, Eye, KeyRound, LockKeyhole, LogOut, MapPin, Menu, Moon, ShieldCheck, Sparkles, Sun, UserRound, Users, X, BrainCircuit } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { AuthorityOnboarding } from "@/components/auth/AuthorityOnboarding";
@@ -18,7 +18,7 @@ import "@/Mobile.css";
 import "@/Workspace.css";
 
 const navigation = {
-  passenger: [["Overview", Eye], ["Bus & rail", BusFront], ["Crowd map", Users], ["Saved routes", MapPin], ["Settings", Sun]],
+  passenger: [["Search", BusFront], ["AI crowd prediction", BrainCircuit], ["Crowd map", Users], ["Saved routes", MapPin], ["Settings", Sun]],
   authority: [["Overview", Eye], ["Live crowd", Users], ["CCTV cameras", Camera], ["Transport registry", BusFront], ["Reports", Sparkles], ["Settings", Sun]],
   developer: [["Overview", Eye], ["Access codes", KeyRound], ["Authorities", ShieldCheck], ["Facilities", MapPin], ["Branding", Sparkles], ["Settings", Sun]],
 };
@@ -27,7 +27,8 @@ const Logo = ({ light = false, testId }) => <BrandLogo light={light} testId={tes
 
 const navTranslationKeys = {
   Overview: "nav.overview",
-  "Bus & rail": "nav.busRail",
+  Search: "nav.search",
+  "AI crowd prediction": "nav.aiPrediction",
   "Crowd map": "nav.crowdMap",
   "Saved routes": "nav.savedRoutes",
   Settings: "nav.settings",
@@ -57,7 +58,7 @@ const Sidebar = ({ role, page, setPage, theme, setTheme, mobileOpen, setMobileOp
 };
 
 const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
-  const [page, setPage] = useState("Overview"); const [theme, setTheme] = useState("light"); const [mobileOpen, setMobileOpen] = useState(false);
+  const [page, setPage] = useState(role === "passenger" ? "Search" : "Overview"); const [theme, setTheme] = useState("light"); const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => { getUserSettings(session.user.id).then(settings => { if (settings?.theme) setTheme(settings.theme); }).catch(() => {}); }, [session.user.id]);
   useEffect(() => { const dark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches); document.documentElement.classList.toggle("dark", dark); }, [theme]);
   const pageProps = { page, session, profile, theme, setTheme };

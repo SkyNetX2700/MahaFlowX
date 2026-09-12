@@ -47,3 +47,7 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Server-side inference assets
+artifacts/api-server/models/*.pt
+artifacts/api-server/models/*.onnx

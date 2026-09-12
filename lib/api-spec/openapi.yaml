@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: inference
+    description: Server-side YOLO inference
 paths:
   /healthz:
     get:
@@ -24,6 +26,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /health:
+    get:
+      operationId: inferenceHealth
+      tags: [inference]
+      summary: YOLO worker health
+      responses:
+        "200":
+          description: Model is configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InferenceHealth"
+        "503":
+          description: Model is not configured
+  /detect:
+    post:
+      operationId: detectPeople
+      tags: [inference]
+      summary: Detect people in a real CCTV frame
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DetectionRequest"
+      responses:
+        "200":
+          description: YOLO detections
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetectionResponse"
+        "400":
+          description: Invalid request
+        "503":
+          description: YOLO model is not configured
 components:
   schemas:
     HealthStatus:
@@ -33,4 +71,58 @@ components:
           type: string
       required:
         - status
+    InferenceHealth:
+      type: object
+      properties:
+        status:
+          type: string
+        inference:
+          type: string
+        model_configured:
+          type: boolean
+        model_name:
+          type: string
+      required: [status, inference, model_configured, model_name]
+    DetectionRequest:
+      type: object
+      properties:
+        image_base64:
+          type: string
+          description: Base64-encoded image or data URL containing a real CCTV frame
+        capacity:
+          type: number
+          minimum: 1
+        confidence:
+          type: number
+          minimum: 0.01
+          maximum: 0.99
+      required: [image_base64]
+    DetectionBox:
+      type: object
+      properties:
+        x1: { type: number }
+        y1: { type: number }
+        x2: { type: number }
+        y2: { type: number }
+        confidence: { type: number }
+      required: [x1, y1, x2, y2, confidence]
+    DetectionResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        count:
+          type: integer
+        boxes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DetectionBox"
+        crowd_level:
+          type: string
+          enum: [Low, Medium, High]
+        crowd_percentage:
+          type: [number, "null"]
+        model:
+          type: string
+      required: [ok, count, boxes, crowd_level, crowd_percentage, model]
 
