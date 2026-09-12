@@ -9,8 +9,30 @@ import { useLanguage } from "@/i18n";
 
 const fileAsBase64 = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
-  reader.onload = () => resolve(String(reader.result));
   reader.onerror = () => reject(new Error("The CCTV frame could not be read."));
+  reader.onload = () => {
+    const image = new Image();
+    image.onerror = () => reject(new Error("The selected file is not a readable image."));
+    image.onload = () => {
+      const maxDimension = 1600;
+      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        if (!blob) {
+          reject(new Error("The CCTV frame could not be prepared."));
+          return;
+        }
+        const output = new FileReader();
+        output.onload = () => resolve(String(output.result));
+        output.onerror = () => reject(new Error("The CCTV frame could not be prepared."));
+        output.readAsDataURL(blob);
+      }, "image/jpeg", 0.82);
+    };
+    image.src = String(reader.result);
+  };
   reader.readAsDataURL(file);
 });
 

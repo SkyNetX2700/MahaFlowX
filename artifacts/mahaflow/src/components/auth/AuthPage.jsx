@@ -7,6 +7,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { AuthorityAuthModal } from "@/components/auth/AuthorityAuthModal";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/i18n";
+import { getAuthRedirectUrl, getGoogleAuthError } from "@/lib/auth";
 
 const API = `${import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || ""}/api`;
 const transitImage = "https://images.unsplash.com/photo-1582217900003-2b19c0e3a7d0?crop=entropy&cs=srgb&fm=jpg&q=85";
@@ -54,7 +55,7 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
     }
     const response = mode === "signin"
       ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } });
+      : await supabase.auth.signUp({ email, password, options: { emailRedirectTo: getAuthRedirectUrl() } });
     if (response.error) setMessage(response.error.message);
     else if (response.data.session) await onAuthenticated(response.data.session);
     else setMessage(t("auth.resetSent"));
@@ -70,15 +71,20 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
     }
     setBusy(true);
     setMessage("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        queryParams: { access_type: "offline", prompt: "consent" },
-      },
-    });
-    if (error) {
-      setMessage(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: getAuthRedirectUrl(),
+          queryParams: { access_type: "offline", prompt: "consent" },
+        },
+      });
+      if (error) {
+        setMessage(getGoogleAuthError(error));
+        setBusy(false);
+      }
+    } catch (error) {
+      setMessage(getGoogleAuthError(error));
       setBusy(false);
     }
   };
@@ -95,7 +101,7 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
     }
     localStorage.setItem("mahaflow-password-recovery", "true");
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?recovery=1`,
+      redirectTo: getAuthRedirectUrl("?recovery=1"),
     });
     setMessage(error?.message || t("auth.resetSent"));
   };
