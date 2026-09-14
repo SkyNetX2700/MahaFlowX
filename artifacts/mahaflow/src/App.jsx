@@ -69,7 +69,7 @@ const Workspace = ({ role = "passenger", profile, session, onSignOut }) => {
     <main className="workspace-main"><div className="mobile-top"><Logo testId="workspace-mobile-logo"/><button className="icon-button" data-testid="mobile-menu-button" aria-label="Open workspace navigation" onClick={() => setMobileOpen(true)}><Menu/></button></div>
       {profile?.facility_id && <div className="facility-chip" data-testid="assigned-facility"><MapPin size={14}/>Facility access is code-locked</div>}
       <WorkspaceUtilities role={role} setPage={setPage}/>
-      {page === "MF AI" && <MahaFlowAI role={role}/>}
+      {page === "MF AI" && <MahaFlowAI role={role} session={session} profile={profile}/>}
       {role === "passenger" && page !== "MF AI" && <PassengerWorkspace {...pageProps}/>}
       {role === "authority" && page !== "MF AI" && <AuthorityWorkspace {...pageProps}/>}
       {role === "developer" && <DeveloperWorkspace {...pageProps}/>} 

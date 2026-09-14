@@ -62,9 +62,9 @@ export const DetectPeopleResponse = zod.object({
 /**
  * @summary Ask MahaFlow AI a transportation question
  */
-export const chatWithMahaFlowAIBodyMessagesItemContentMax = 4000;
+export const chatWithMahaFlowAIBodyMessagesItemContentMax = 6000;
 
-export const chatWithMahaFlowAIBodyMessagesMax = 16;
+export const chatWithMahaFlowAIBodyMessagesMax = 24;
 
 
 

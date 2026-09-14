@@ -12,7 +12,7 @@ tags:
     description: Health operations
   - name: inference
     description: Server-side YOLO inference
-  - name: gemini
+  - name: groq
     description: MahaFlow AI transportation assistant
 paths:
   /healthz:
@@ -64,24 +64,24 @@ paths:
           description: Invalid request
         "503":
           description: YOLO model is not configured
-  /gemini/chat:
+  /groq/chat:
     post:
       operationId: chatWithMahaFlowAI
-      tags: [gemini]
+      tags: [groq]
       summary: Ask MahaFlow AI a transportation question
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GeminiChatRequest"
+              $ref: "#/components/schemas/GroqChatRequest"
       responses:
         "200":
           description: MahaFlow AI response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GeminiChatResponse"
+                $ref: "#/components/schemas/GroqChatResponse"
         "400":
           description: Invalid request
         "429":
@@ -151,12 +151,12 @@ components:
         model:
           type: string
       required: [ok, count, boxes, crowd_level, crowd_percentage, model]
-    GeminiChatRequest:
+    GroqChatRequest:
       type: object
       properties:
         messages:
           type: array
-          maxItems: 16
+          maxItems: 24
           items:
             type: object
             properties:
@@ -165,13 +165,13 @@ components:
                 enum: [user, assistant]
               content:
                 type: string
-                maxLength: 4000
+                maxLength: 6000
             required: [role, content]
         context:
           type: object
           additionalProperties: true
       required: [messages]
-    GeminiChatResponse:
+    GroqChatResponse:
       type: object
       properties:
         message:

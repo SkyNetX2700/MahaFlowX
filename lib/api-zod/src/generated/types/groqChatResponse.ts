@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface GeminiChatResponse {
+export interface GroqChatResponse {
   message: string;
   assistant: string;
 }

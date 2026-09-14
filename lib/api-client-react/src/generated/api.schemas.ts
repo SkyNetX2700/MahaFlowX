@@ -55,29 +55,29 @@ export interface DetectionResponse {
   model: string;
 }
 
-export type GeminiChatRequestMessagesItemRole = typeof GeminiChatRequestMessagesItemRole[keyof typeof GeminiChatRequestMessagesItemRole];
+export type GroqChatRequestMessagesItemRole = typeof GroqChatRequestMessagesItemRole[keyof typeof GroqChatRequestMessagesItemRole];
 
 
-export const GeminiChatRequestMessagesItemRole = {
+export const GroqChatRequestMessagesItemRole = {
   user: 'user',
   assistant: 'assistant',
 } as const;
 
-export type GeminiChatRequestMessagesItem = {
-  role: GeminiChatRequestMessagesItemRole;
-  /** @maxLength 4000 */
+export type GroqChatRequestMessagesItem = {
+  role: GroqChatRequestMessagesItemRole;
+  /** @maxLength 6000 */
   content: string;
 };
 
-export type GeminiChatRequestContext = { [key: string]: unknown };
+export type GroqChatRequestContext = { [key: string]: unknown };
 
-export interface GeminiChatRequest {
-  /** @maxItems 16 */
-  messages: GeminiChatRequestMessagesItem[];
-  context?: GeminiChatRequestContext;
+export interface GroqChatRequest {
+  /** @maxItems 24 */
+  messages: GroqChatRequestMessagesItem[];
+  context?: GroqChatRequestContext;
 }
 
-export interface GeminiChatResponse {
+export interface GroqChatResponse {
   message: string;
   assistant: string;
 }

@@ -1,6 +1,7 @@
 export const getAuthRedirectUrl = (suffix = "") => {
   const configured = import.meta.env.VITE_AUTH_REDIRECT_URL || import.meta.env.REACT_APP_AUTH_REDIRECT_URL;
-  const base = configured || `${window.location.origin}/auth/callback`;
+  const viteBase = String(import.meta.env.BASE_URL || "/").replace(/\/+$/, "");
+  const base = configured || `${window.location.origin}${viteBase}/auth/callback`;
   return `${base}${suffix}`;
 };
 

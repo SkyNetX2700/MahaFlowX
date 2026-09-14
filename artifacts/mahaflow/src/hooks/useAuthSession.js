@@ -68,7 +68,7 @@ export const useAuthSession = () => {
     const profile = await resolveProfile(nextSession);
     if (requestRef.current !== requestId) return;
 
-    if (window.location.pathname === "/auth/callback") {
+    if (window.location.pathname.endsWith("/auth/callback")) {
       const recovery = new URLSearchParams(window.location.search).get("recovery") === "1" || localStorage.getItem("mahaflow-password-recovery") === "true";
       window.history.replaceState({}, document.title, recovery ? "/reset-password" : "/");
     }

@@ -22,8 +22,8 @@ import type {
 import type {
   DetectionRequest,
   DetectionResponse,
-  GeminiChatRequest,
-  GeminiChatResponse,
+  GroqChatRequest,
+  GroqChatResponse,
   HealthStatus,
   InferenceHealth
 } from './api.schemas';
@@ -286,20 +286,20 @@ export const getChatWithMahaFlowAIUrl = () => {
 
 
 
-  return `/api/gemini/chat`
+  return `/api/groq/chat`
 }
 
 /**
  * @summary Ask MahaFlow AI a transportation question
  */
-export const chatWithMahaFlowAI = async (geminiChatRequest: GeminiChatRequest, options?: Parameters<typeof customFetch>[1]): Promise<GeminiChatResponse> => {
+export const chatWithMahaFlowAI = async (groqChatRequest: GroqChatRequest, options?: Parameters<typeof customFetch>[1]): Promise<GroqChatResponse> => {
 
-  return customFetch<GeminiChatResponse>(getChatWithMahaFlowAIUrl(),
+  return customFetch<GroqChatResponse>(getChatWithMahaFlowAIUrl(),
   {
     ...options,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(geminiChatRequest)
+    body: JSON.stringify(groqChatRequest)
   }
 );}
 
@@ -308,8 +308,8 @@ export const chatWithMahaFlowAI = async (geminiChatRequest: GeminiChatRequest, o
 
 
 export const getChatWithMahaFlowAIMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GeminiChatRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GeminiChatRequest>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GroqChatRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GroqChatRequest>}, TContext> => {
 
 const mutationKey = ['chatWithMahaFlowAI'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -321,7 +321,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, {data: BodyType<GeminiChatRequest>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, {data: BodyType<GroqChatRequest>}> = (props) => {
           const {data} = props ?? {};
 
           return  chatWithMahaFlowAI(data,requestOptions)
@@ -335,18 +335,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type ChatWithMahaFlowAIMutationResult = NonNullable<Awaited<ReturnType<typeof chatWithMahaFlowAI>>>
-    export type ChatWithMahaFlowAIMutationBody = BodyType<GeminiChatRequest>
+    export type ChatWithMahaFlowAIMutationBody = BodyType<GroqChatRequest>
     export type ChatWithMahaFlowAIMutationError = ErrorType<void>
 
     /**
  * @summary Ask MahaFlow AI a transportation question
  */
 export const useChatWithMahaFlowAI = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GeminiChatRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithMahaFlowAI>>, TError,{data: BodyType<GroqChatRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof chatWithMahaFlowAI>>,
         TError,
-        {data: BodyType<GeminiChatRequest>},
+        {data: BodyType<GroqChatRequest>},
         TContext
       > => {
       return useMutation(getChatWithMahaFlowAIMutationOptions(options));

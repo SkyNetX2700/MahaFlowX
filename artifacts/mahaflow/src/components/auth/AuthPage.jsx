@@ -72,15 +72,21 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
     setBusy(true);
     setMessage("");
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: getAuthRedirectUrl(),
+          skipBrowserRedirect: true,
           queryParams: { access_type: "offline", prompt: "consent" },
         },
       });
       if (error) {
         setMessage(getGoogleAuthError(error));
+        setBusy(false);
+      } else if (data?.url) {
+        window.location.assign(data.url);
+      } else {
+        setMessage("Google sign-in did not return a provider URL. Check the Supabase Google provider configuration.");
         setBusy(false);
       }
     } catch (error) {

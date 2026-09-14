@@ -16,13 +16,19 @@ export const AuthorityAuthModal = ({ onClose, onAuthenticated }) => {
     sessionStorage.setItem("mahaflow-authority-onboarding", "true");
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: getAuthRedirectUrl(), queryParams: { access_type: "offline", prompt: "consent" } },
+        options: { redirectTo: getAuthRedirectUrl(), skipBrowserRedirect: true, queryParams: { access_type: "offline", prompt: "consent" } },
       });
       if (error) {
         sessionStorage.removeItem("mahaflow-authority-onboarding");
         setMessage(getGoogleAuthError(error));
+        setBusy(false);
+      } else if (data?.url) {
+        window.location.assign(data.url);
+      } else {
+        sessionStorage.removeItem("mahaflow-authority-onboarding");
+        setMessage("Google sign-in did not return a provider URL. Check the Supabase Google provider configuration.");
         setBusy(false);
       }
     } catch (error) {
