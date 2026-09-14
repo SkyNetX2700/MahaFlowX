@@ -16,7 +16,7 @@ type GroqResponse = {
 };
 
 const router: IRouter = Router();
-const MODEL = process.env["GROQ_MODEL"] || "llama-3.3-70b-versatile";
+const MODEL = process.env["GROQ_MODEL"] || "openai/gpt-oss-120b";
 const MAX_MESSAGES = 24;
 const MAX_MESSAGE_LENGTH = 6000;
 const MAX_CONTEXT_LENGTH = 60000;

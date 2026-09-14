@@ -2,3 +2,4 @@
 - [Vercel serverless TypeScript](vercel-serverless-types.md) — standalone API functions may need local runtime declarations when root TS config omits Node/DOM libs.
 - [YOLO inference runtime](yolo-inference-runtime.md) — inference requires a server-side .pt model and a Python runtime with Ultralytics; never fall back to simulated detections.
 - [Gemini model availability](gemini-model-availability.md) — new direct Gemini API users may need gemini-3.6-flash because older flash models can be retired.
+- [Groq model availability](groq-model-availability.md) — Groq IDs can be retired or account-dependent; verify the live model list after configuring GROQ_API_KEY.

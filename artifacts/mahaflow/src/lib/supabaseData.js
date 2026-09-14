@@ -137,3 +137,55 @@ export const getBranding = async () => {
 export const saveBranding = (ownerId, branding) => result(
   supabase.from("mahaflow_branding_settings").upsert({ id: true, ...branding, updated_by: ownerId, updated_at: new Date().toISOString() }).select().single()
 );
+
+export const listAIConversations = async (ownerId, workspaceRole) => {
+  if (!supabase) return [];
+  const conversations = await result(
+    supabase.from("mahaflow_ai_conversations")
+      .select("*")
+      .eq("owner_user_id", ownerId)
+      .eq("workspace_role", workspaceRole)
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(40)
+  );
+  if (!conversations.length) return [];
+  const messages = await result(
+    supabase.from("mahaflow_ai_messages")
+      .select("*")
+      .eq("owner_user_id", ownerId)
+      .in("conversation_id", conversations.map(item => item.id))
+      .order("created_at")
+  );
+  return conversations.map(conversation => ({
+    id: conversation.id,
+    title: conversation.title,
+    updatedAt: new Date(conversation.updated_at).getTime(),
+    messages: messages
+      .filter(message => message.conversation_id === conversation.id)
+      .map(message => ({ role: message.role, content: message.content })),
+  })).filter(conversation => conversation.messages.length);
+};
+
+export const saveAIConversation = (ownerId, workspaceRole, conversation) => {
+  if (!supabase) return Promise.resolve(null);
+  return result(supabase.from("mahaflow_ai_conversations").upsert({
+    id: conversation.id,
+    owner_user_id: ownerId,
+    workspace_role: workspaceRole,
+    title: conversation.title,
+    updated_at: new Date(conversation.updatedAt).toISOString(),
+  }, { onConflict: "id" }).select().single());
+};
+
+export const replaceAIMessages = async (ownerId, conversationId, messages) => {
+  if (!supabase) return [];
+  await result(supabase.from("mahaflow_ai_messages").delete().eq("owner_user_id", ownerId).eq("conversation_id", conversationId));
+  if (!messages.length) return [];
+  return result(supabase.from("mahaflow_ai_messages").insert(messages.map(message => ({
+    conversation_id: conversationId,
+    owner_user_id: ownerId,
+    role: message.role,
+    content: message.content,
+  }))));
+};

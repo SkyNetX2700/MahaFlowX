@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Bot, BusFront, Check, Clock3, Menu, MessageSquarePlus, MoreHorizontal, Send, Sparkles, Trash2, Users, X } from "lucide-react";
-import { listCrowdPredictions, listCrowdReadings, listFacilities, listTransportServices } from "@/lib/supabaseData";
+import { listAIConversations, listCrowdPredictions, listCrowdReadings, listFacilities, listTransportServices, replaceAIMessages, saveAIConversation } from "@/lib/supabaseData";
 import { LoadingState, ErrorState } from "@/components/workspace/WorkspaceUI";
 
 const initialMessage = {
@@ -48,7 +48,7 @@ const compactPrediction = (prediction, includePrivateFields) => ({
 });
 
 const newConversation = () => ({
-  id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  id: globalThis.crypto?.randomUUID?.() || `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   title: "New conversation",
   updatedAt: Date.now(),
   messages: [initialMessage],
@@ -108,6 +108,26 @@ export const MahaFlowAI = ({ role, session, profile }) => {
 
   useEffect(() => {
     window.localStorage.setItem(historyKey, JSON.stringify(conversations.slice(0, 40)));
+  }, [conversations, historyKey]);
+
+  const syncConversation = conversation => Promise.all([
+    saveAIConversation(session.user.id, role, conversation),
+    replaceAIMessages(session.user.id, conversation.id, conversation.messages),
+  ]).catch(() => {});
+
+  useEffect(() => {
+    let active = true;
+    listAIConversations(session.user.id, role).then(remote => {
+      if (active && remote.length) setConversations(remote);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [role, session.user.id]);
+
+  useEffect(() => {
+    const syncTimer = window.setTimeout(() => {
+      void Promise.all(conversations.slice(0, 40).map(syncConversation));
+    }, 350);
+    return () => window.clearTimeout(syncTimer);
   }, [conversations, historyKey]);
 
   useEffect(() => {
