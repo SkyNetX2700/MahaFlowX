@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Bot, BusFront, Check, Clock3, Menu, MessageSquarePlus, MoreHorizontal, Send, Sparkles, Trash2, Users, X } from "lucide-react";
+import { ArrowRight, Bot, Check, Menu, MessageSquarePlus, MoreHorizontal, Send, Sparkles, Trash2, Users, X } from "lucide-react";
 import { listAIConversations, listCrowdPredictions, listCrowdReadings, listFacilities, listTransportServices, replaceAIMessages, saveAIConversation } from "@/lib/supabaseData";
 import { LoadingState, ErrorState } from "@/components/workspace/WorkspaceUI";
 
@@ -7,6 +7,8 @@ const initialMessage = {
   role: "assistant",
   content: "Namaste. I’m MahaFlow AI, your Maharashtra public transportation assistant. I can help with verified routes, timings, delays, stations, bus stands, and crowd information.",
 };
+
+const cleanAIText = value => String(value || "").replace(/\*\*/g, "").replace(/\*/g, "").trim();
 
 const promptSuggestions = [
   "Which verified routes are available today?",
@@ -75,7 +77,7 @@ const ChatMessage = ({ message }) => (
   </article>
 );
 
-export const MahaFlowAI = ({ role, session, profile }) => {
+export const MahaFlowAI = ({ role, session, profile, setPage }) => {
   const historyKey = `mahaflow-ai-history:${session.user.id}:${role}`;
   const [conversations, setConversations] = useState(() => {
     const saved = loadHistory(historyKey);
@@ -95,6 +97,7 @@ export const MahaFlowAI = ({ role, session, profile }) => {
   const [time, setTime] = useState("");
   const [predictionBusy, setPredictionBusy] = useState(false);
   const [predictionResult, setPredictionResult] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const activeConversation = conversations.find(item => item.id === activeId) || conversations[0];
@@ -200,14 +203,14 @@ export const MahaFlowAI = ({ role, session, profile }) => {
   };
 
   const askAI = async (nextMessages, purpose = "chat", requestContext = context) => {
-    const response = await fetch("/api/groq/chat", {
+    const response = await fetch(purpose === "crowd_prediction" ? "/api/gemini/chat" : "/api/groq/chat", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ messages: nextMessages, context: { ...requestContext, purpose } }),
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.detail || "MahaFlow AI is unavailable.");
-    return body.message;
+    return cleanAIText(body.message);
   };
 
   const sendMessage = async event => {
@@ -260,13 +263,22 @@ export const MahaFlowAI = ({ role, session, profile }) => {
         crowd_readings: relevantReadings.map(item => compactReading(item, isAuthority)),
         crowd_predictions: relevantPredictions.map(item => compactPrediction(item, isAuthority)),
       });
-      setPredictionResult(answer);
+       setPredictionResult(cleanAIText(answer));
     } catch (error) {
       setMessageError(error.message);
     } finally {
       setPredictionBusy(false);
     }
   };
+
+  if (!chatOpen) return <div className="mf-ai-page mf-ai-hub">
+    <div className="mf-ai-topbar"><div><span className="eyebrow"><Sparkles size={13}/> {role.toUpperCase()} · MAHAFLOW AI</span><h1>MahaFlow AI</h1><p>Choose the MahaFlow AI tool you want to use.</p></div><span className="mf-ai-privacy"><Users size={14}/> {isAuthority ? "Your facility scope" : "Public data scope"}</span></div>
+    <section className="mf-ai-hub-grid">
+      <article className="mf-ai-hub-card chat"><div className="mf-ai-hub-icon"><Bot size={24}/></div><span className="eyebrow">ASSISTED TRAVEL</span><h2>Chat with AI</h2><p>Ask about verified routes, timings, delays, stations, bus stands, and public crowd information.</p><button className="primary-button" onClick={() => setChatOpen(true)} data-testid="open-ai-chat-button">Chat with AI <ArrowRight size={16}/></button></article>
+      <article className="mf-ai-hub-card prediction"><div className="mf-ai-hub-icon"><Sparkles size={24}/></div><span className="eyebrow">LIVE CROWD INSIGHT</span><h2>AI crowd prediction</h2><p>Review the latest crowd predictions from real authority CCTV and the configured YOLO model.</p><button className="outline-button" onClick={() => setPage?.("AI crowd prediction")} data-testid="open-ai-prediction-button">Open crowd prediction <ArrowRight size={16}/></button></article>
+    </section>
+    <div className="mf-ai-hub-note"><Users size={16}/><span><b>Your conversations are saved</b><small>MahaFlow keeps chat history on this account and on this device so you can continue later.</small></span></div>
+  </div>;
 
   return <div className="mf-ai-page">
     <div className="mf-ai-topbar"><div><span className="eyebrow"><Sparkles size={13}/> {role.toUpperCase()} · MAHAFLOW AI</span><h1>MahaFlow AI</h1><p>Your verified Maharashtra public transportation assistant.</p></div><div className="mf-ai-top-actions"><span className="mf-ai-privacy"><Users size={14}/> {isAuthority ? "Your facility scope" : "Public data scope"}</span><button className="icon-button mf-ai-mobile-history" onClick={() => setMobileHistoryOpen(value => !value)} aria-label="Open chat history"><Menu size={18}/></button></div></div>
@@ -289,16 +301,6 @@ export const MahaFlowAI = ({ role, session, profile }) => {
         <form className="mf-ai-full-composer" onSubmit={sendMessage}><div className="mf-ai-composer-box"><textarea value={input} onChange={event => setInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form.requestSubmit(); } }} rows="1" placeholder="Message MahaFlow AI…" aria-label="Message MahaFlow AI" data-testid="mf-ai-chat-input"/><div className="mf-ai-composer-footer"><span>Shift + Enter for a new line · MahaFlow data only</span><button className="mf-ai-send" disabled={busy || !input.trim()} aria-label="Send message" data-testid="mf-ai-send-button"><Send size={17}/></button></div></div></form>
         {messageError && <div className="mf-ai-error" data-testid="mf-ai-error">{messageError}</div>}
       </main>
-      <aside className="mf-ai-insights">
-        <div className="mf-ai-insight-head"><span className="mf-chat-avatar"><Users size={15}/></span><span><b>AI crowd prediction</b><small>Analyze YOLO records for a journey</small></span></div>
-        <form className="mf-ai-prediction-form" onSubmit={predictCrowd}>
-          <label><span>Bus stand / station</span><select value={fromFacilityId} onChange={event => setFromFacilityId(event.target.value)} data-testid="mf-ai-origin-select" required><option value="">Select facility</option>{busStands.map(facility => <option value={facility.id} key={facility.id}>{facility.name} · {facility.kind === "railway" ? "Railway" : "Bus stand"}</option>)}</select></label>
-          <label><span>Destination</span><input value={destination} onChange={event => setDestination(event.target.value)} placeholder="Enter destination" data-testid="mf-ai-destination-input" required/></label>
-          <div className="mf-ai-form-row"><label><span>Date</span><input type="date" value={date} onChange={event => setDate(event.target.value)} data-testid="mf-ai-date-input" required/></label><label><span>Time</span><input type="time" value={time} onChange={event => setTime(event.target.value)} data-testid="mf-ai-time-input" required/></label></div>
-          <button className="mf-ai-predict-button" disabled={predictionBusy || !fromFacilityId || !destination.trim() || !date || !time} data-testid="mf-ai-predict-button">{predictionBusy ? "Analyzing YOLO data…" : "Predict crowd"}<ArrowRight size={15}/></button>
-        </form>
-        {predictionResult ? <div className="mf-ai-prediction-result" data-testid="mf-ai-prediction-result"><span className="eyebrow">MAHAFLOW AI RESULT</span><p>{predictionResult}</p></div> : <div className="mf-ai-insight-note"><BusFront size={15}/><span><b>Verified data boundary</b><small>Only public records or your own authority readings are sent to MahaFlow AI. Missing YOLO data is reported as unavailable.</small></span></div>}
-      </aside>
     </div>
   </div>;
 };

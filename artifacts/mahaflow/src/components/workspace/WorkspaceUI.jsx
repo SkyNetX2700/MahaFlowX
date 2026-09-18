@@ -25,3 +25,30 @@ export const ErrorState = ({ message }) => (
 export const StatusBadge = ({ value, testId }) => (
   <span className={`data-badge ${slug(value)}`} data-testid={testId}>{value}</span>
 );
+
+export const formatTime12 = value => {
+  if (!value) return "—";
+  const text = String(value);
+  const match = text.match(/(?:T|\s)?(\d{1,2}):(\d{2})/);
+  if (!match) return text;
+  const hour = Number(match[1]);
+  const minute = match[2];
+  if (!Number.isFinite(hour)) return text;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const twelveHour = hour % 12 || 12;
+  return `${twelveHour}:${minute} ${suffix}`;
+};
+
+export const formatDateTime12 = value => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatTime12(value);
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};

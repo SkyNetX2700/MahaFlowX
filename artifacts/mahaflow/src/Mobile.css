@@ -4,3 +4,50 @@
   .sidebar-mobile-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
   .sidebar.mobile-open{display:flex;position:fixed;inset:0 auto 0 0;width:min(300px,88vw);z-index:20;box-shadow:18px 0 45px #07133133}
 }
+
+@media(max-width:900px){
+  .workspace-main{padding-left:17px;padding-right:17px;padding-bottom:94px}
+  .workspace-main:before{opacity:.18}
+  .mobile-top{padding:3px 2px}
+  .mobile-top .brand-mark{gap:9px}
+  .mobile-top .brand-logo-image{width:38px;height:38px}
+  .mobile-top .brand-mark b{color:var(--workspace-indigo)}
+  .page-heading{gap:17px}
+  .heading-actions{gap:10px}
+  .heading-actions .live-dot{padding-left:2px}
+  .hero-band{box-shadow:0 15px 30px rgba(19,64,91,.13)}
+  .metric-grid{gap:11px}
+  .metric{min-width:0}
+  .service-row,.code-table article,.authority-list article{padding:17px 14px}
+  .map-layout,.camera-workspace,.registry-layout,.facility-layout,.branding-layout{gap:15px}
+  .settings-section,.data-form{padding:19px}
+  .notification-button{width:39px;height:39px}
+}
+
+@media(max-width:560px){
+  .workspace-main{padding-left:13px;padding-right:13px}
+  .mobile-top{margin-bottom:24px}
+  .mobile-top .brand-logo-image{width:34px;height:34px}
+  .page-heading h1,.section-heading h1{letter-spacing:-.6px}
+  .page-heading p,.section-heading p{font-size:12px;line-height:1.65}
+  .heading-actions{align-items:center}
+  .heading-actions .outline-button{padding:10px 11px}
+  .hero-band{border-radius:19px;padding:25px 20px}
+  .hero-band h2{max-width:230px}
+  .metric-grid{grid-template-columns:1fr 1fr;gap:9px}
+  .metric{border-radius:13px;padding:14px 12px;grid-template-columns:31px 1fr;gap:2px 8px}
+  .metric b{font-size:20px}
+  .metric span{font-size:10px}
+  .metric small{font-size:9px}
+  .control-strip,.filter-bar{padding:13px;border-radius:12px}
+  .service-row,.code-table article,.authority-list article{border-radius:0}
+  .service-list,.code-table,.authority-list{border-radius:13px}
+  .service-main b{font-size:12px}
+  .service-main small{line-height:1.5}
+  .route-path{gap:6px}
+  .route-point b{font-size:12px}
+  .crowd-result{margin-top:4px}
+  .saved-card,.facility-grid article{padding:14px}
+  .mf-ai-topbar{margin-bottom:16px}
+  .mf-ai-product-shell{border-radius:14px}
+}

@@ -3,6 +3,7 @@ import healthRouter from "./health";
 import securityRouter from "./security";
 import inferenceRouter from "./inference";
 import groqRouter from "./groq";
+import geminiRouter from "./gemini";
 
 const router: IRouter = Router();
 
@@ -10,5 +11,6 @@ router.use(healthRouter);
 router.use(securityRouter);
 router.use(inferenceRouter);
 router.use(groqRouter);
+router.use(geminiRouter);
 
 export default router;

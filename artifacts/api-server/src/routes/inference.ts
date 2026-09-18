@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { Router, type IRouter } from "express";
@@ -21,11 +21,22 @@ type WorkerResponse = {
 };
 
 const router: IRouter = Router();
-const defaultModelPath = path.resolve(process.cwd(), "artifacts/api-server/models/YOLO26n.pt");
+const modelDirectory = path.resolve(process.cwd(), "artifacts/api-server/models");
+const defaultModelPath = path.resolve(modelDirectory, "YOLO26n.pt");
 const defaultWorkerPath = path.resolve(process.cwd(), "artifacts/api-server/src/inference_worker.py");
 const projectPythonPath = path.resolve(process.cwd(), ".pythonlibs/bin/python");
 
-const modelPath = () => process.env["YOLO_MODEL_PATH"] || defaultModelPath;
+const modelPath = () => {
+  const configured = process.env["YOLO_MODEL_PATH"];
+  if (configured) return configured;
+  if (existsSync(defaultModelPath)) return defaultModelPath;
+  try {
+    const uploadedModel = readdirSync(modelDirectory).find(file => file.toLowerCase().endsWith(".pt"));
+    return uploadedModel ? path.resolve(modelDirectory, uploadedModel) : defaultModelPath;
+  } catch {
+    return defaultModelPath;
+  }
+};
 const workerPath = () => process.env["YOLO_WORKER_SCRIPT"] || defaultWorkerPath;
 const pythonCommand = () => process.env["YOLO_PYTHON"] || (existsSync(projectPythonPath) ? projectPythonPath : "python3");
 

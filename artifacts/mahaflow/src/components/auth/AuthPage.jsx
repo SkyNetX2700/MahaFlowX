@@ -11,6 +11,7 @@ import { getAuthRedirectUrl, getGoogleAuthError } from "@/lib/auth";
 
 const API = `${import.meta.env.VITE_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL || ""}/api`;
 const transitImage = "https://images.unsplash.com/photo-1582217900003-2b19c0e3a7d0?crop=entropy&cs=srgb&fm=jpg&q=85";
+const GoogleLogo = () => <svg className="google-g" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.35 12.27c0-.72-.06-1.42-.18-2.09H12v3.96h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.26Z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.55 0-4.71-1.72-5.49-4.04H3.27v2.53A9.74 9.74 0 0 0 12 21.75Z"/><path fill="#FBBC05" d="M6.51 13.82A5.86 5.86 0 0 1 6.2 12c0-.63.11-1.24.31-1.82V7.65H3.27A9.74 9.74 0 0 0 2.25 12c0 1.57.38 3.05 1.02 4.35l3.24-2.53Z"/><path fill="#EA4335" d="M12 6.14c1.43 0 2.72.49 3.74 1.45l2.8-2.8C16.84 3.12 14.63 2.25 12 2.25a9.74 9.74 0 0 0-8.73 5.4l3.24 2.53c.78-2.32 2.94-4.04 5.49-4.04Z"/></svg>;
 
 export const AuthPage = ({ onAuthenticated, authError = "" }) => {
   const { t } = useLanguage();
@@ -147,7 +148,7 @@ export const AuthPage = ({ onAuthenticated, authError = "" }) => {
      <button className="primary-button" data-testid="auth-submit-button" disabled={busy}>{busy ? "…" : mode === "signin" ? t("auth.signIn") : t("auth.createAccount")}<ArrowRight size={18}/></button>
         </form>
         <div className="divider"><span>{t("auth.or")}</span></div>
-        <button type="button" className="google-button" data-testid="google-signin-button" disabled={busy || !supabase} title={supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")} onClick={google}><span className="google-g">G</span>{supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")}</button>
+         <button type="button" className="google-button" data-testid="google-signin-button" disabled={busy || !supabase} title={supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")} onClick={google}><GoogleLogo/>{supabase ? t("auth.continueGoogle") : t("auth.googleUnavailable")}</button>
         <button type="button" className="access-button" data-testid="access-code-open-button" onClick={() => setAuthorityOpen(true)}><KeyRound size={17}/>{t("auth.accessCode")}<ArrowRight size={16}/></button>
         {mode === "signin"
           ? <p className="switch-copy">{t("auth.newHere")} <button type="button" data-testid="create-account-button" className="text-button" onClick={() => { setMode("signup"); setMessage(""); }}>{t("auth.createAccount")} <ArrowRight size={14}/></button></p>

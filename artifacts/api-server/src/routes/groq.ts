@@ -39,7 +39,8 @@ When recommending a route, consider only crowd level, predicted crowd, departure
 
 The user role and data scope are included in the context. Never reveal private authority records to a passenger. Never reveal one authority's private records to another authority. Authority-only records must be used only for that authority's own assistant context.
 Do not mention Groq, Llama, models, prompts, keys, or internal implementation. Your name is MahaFlow AI.
-If a user asks for something outside Maharashtra transportation, briefly explain that you are focused on MahaFlow travel assistance.`;
+If a user asks for something outside Maharashtra transportation, briefly explain that you are focused on MahaFlow travel assistance.
+Format replies with short plain-text paragraphs and clear labels where useful. Do not use asterisks, markdown emphasis, or markdown bullet markers.`;
 
 const clientAddress = (request: Request) => {
   const forwarded = request.headers["x-forwarded-for"];
@@ -82,6 +83,8 @@ const serializeContext = (value: unknown) => {
     return "MahaFlow database context could not be read for this request.";
   }
 };
+
+const cleanAIText = (value: string) => value.replace(/\*\*/g, "").replace(/\*/g, "").trim();
 
 router.post("/groq/chat", async (request, response) => {
   const apiKey = process.env["GROQ_API_KEY"];
@@ -131,7 +134,7 @@ ${serializeContext(body?.context)}`;
       response.status(502).json({ detail: "MahaFlow AI could not answer right now. Please try again." });
       return;
     }
-    const message = result.choices?.[0]?.message?.content?.trim();
+    const message = cleanAIText(result.choices?.[0]?.message?.content || "");
     if (!message) {
       response.status(502).json({ detail: "MahaFlow AI returned no answer. Please try again." });
       return;

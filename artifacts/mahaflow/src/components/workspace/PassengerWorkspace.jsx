@@ -3,8 +3,9 @@ import { ArrowRight, Bookmark, BrainCircuit, BusFront, Clock3, MapPin, Navigatio
 import MapView from "@/components/MapView";
 import { deleteSavedRoute, listCrowdPredictions, listCrowdReadings, listFacilities, listSavedRoutes, listTransportServices, saveRoute } from "@/lib/supabaseData";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
-import { EmptyState, ErrorState, LoadingState, SectionHeader, StatusBadge } from "@/components/workspace/WorkspaceUI";
+import { EmptyState, ErrorState, LoadingState, SectionHeader, StatusBadge, formatDateTime12, formatTime12 } from "@/components/workspace/WorkspaceUI";
 import { SettingsPanel } from "@/components/workspace/SettingsPanel";
+import { CrowdPredictionPanel } from "@/components/workspace/CrowdPredictionPanel";
 import { useLanguage } from "@/i18n";
 
 const CrowdResult = ({ result }) => (
@@ -27,6 +28,7 @@ const TransportExplorer = ({ session }) => {
   const [message, setMessage] = useState("");
   const [prediction, setPrediction] = useState({});
   const [busyId, setBusyId] = useState("");
+  const [selectedService, setSelectedService] = useState(null);
 
   const filtered = useMemo(() => services.data.filter(item => {
     const matchesMode = mode === "all" || item.mode === mode;
@@ -72,26 +74,22 @@ const TransportExplorer = ({ session }) => {
       <label className="route-filter-field"><MapPin size={16}/><span><small>{t("passenger.from")}</small><input value={fromQuery} onChange={event => setFromQuery(event.target.value)} data-testid="transport-from-input" placeholder={t("passenger.startingPoint")} aria-label={t("passenger.from")}/></span></label>
       <label className="route-filter-field"><Navigation size={16}/><span><small>{t("passenger.destination")}</small><input value={destinationQuery} onChange={event => setDestinationQuery(event.target.value)} data-testid="transport-destination-input" placeholder={t("passenger.whereGoing")} aria-label={t("passenger.destination")}/></span></label>
        <label className="route-filter-field"><Clock3 size={16}/><span><small>{t("passenger.travelDate")}</small><input type="date" value={date} onChange={event => setDate(event.target.value)} data-testid="transport-date-input" aria-label={t("passenger.travelDate")}/></span></label>
-       <label className="route-filter-field"><Clock3 size={16}/><span><small>{t("passenger.departureTime")}</small><input type="time" value={time} onChange={event => setTime(event.target.value)} data-testid="transport-time-input" aria-label={t("passenger.departureTime")}/></span></label>
+       <label className="route-filter-field"><Clock3 size={16}/><span><small>{t("passenger.departureTime")}</small><input type="time" value={time} onChange={event => setTime(event.target.value)} data-testid="transport-time-input" aria-label={t("passenger.departureTime")}/><small className="time-preview">{formatTime12(time)}</small></span></label>
       <label className="service-filter-field"><Search size={16}/><input value={query} onChange={event => setQuery(event.target.value)} data-testid="transport-search-input" placeholder={t("passenger.serviceSearch")} aria-label={t("passenger.serviceSearch")}/></label>
       <div className="segmented"><button className={mode === "all" ? "active" : ""} data-testid="transport-filter-all" onClick={() => setMode("all")}>{t("passenger.all")}</button><button className={mode === "bus" ? "active" : ""} data-testid="transport-filter-bus" onClick={() => setMode("bus")}>{t("passenger.bus")}</button><button className={mode === "railway" ? "active" : ""} data-testid="transport-filter-railway" onClick={() => setMode("railway")}>{t("passenger.rail")}</button></div>
     </div>
-    {(fromQuery || destinationQuery || date || time) && <div className="route-search-summary" data-testid="route-search-summary"><MapPin size={14}/><span>{t("passenger.showingRoutes")} <b>{fromQuery || t("passenger.anywhere")}</b> {t("passenger.to")} <b>{destinationQuery || t("passenger.anywhere")}</b>{date ? ` · ${date}` : ""}{time ? ` · ${time}` : ""}</span></div>}
+    {(fromQuery || destinationQuery || date || time) && <div className="route-search-summary" data-testid="route-search-summary"><MapPin size={14}/><span>{t("passenger.showingRoutes")} <b>{fromQuery || t("passenger.anywhere")}</b> {t("passenger.to")} <b>{destinationQuery || t("passenger.anywhere")}</b>{date ? ` · ${date}` : ""}{time ? ` · ${formatTime12(time)}` : ""}</span></div>}
     {message && <div className="notice-line" data-testid="transport-save-message">{message}</div>}
-    {services.loading ? <LoadingState label={t("common.loading")}/> : services.error ? <ErrorState message={services.error}/> : filtered.length ? <div className="service-list">{filtered.map(service => <article className="service-row detailed-service-row" key={service.id} data-testid={`transport-service-${service.id}`}>
+    {services.loading ? <LoadingState label={t("common.loading")}/> : services.error ? <ErrorState message={services.error}/> : filtered.length ? <div className="service-list">{filtered.map(service => <article className={`service-row detailed-service-row ${selectedService?.id === service.id ? "service-row-selected" : ""}`} key={service.id} data-testid={`transport-service-${service.id}`} tabIndex="0" role="button" aria-expanded={selectedService?.id === service.id} onClick={() => setSelectedService(service)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedService(service); } }}>
       <div className={`service-mode ${service.mode}`}>{service.mode === "bus" ? <BusFront/> : <TrainFront/>}</div>
       <div className="service-main"><span>{service.service_number}</span><div className="route-path" aria-label={`${t("passenger.from")} ${service.origin} ${t("passenger.to")} ${service.destination}`}><span className="route-point"><small>{t("passenger.from")}</small><b>{service.origin}</b></span><ArrowRight className="route-arrow" size={16}/><span className="route-point"><small>{t("passenger.destination")}</small><b>{service.destination}</b></span></div><small>{service.service_name} · {service.vehicle_registration || "Vehicle details pending"} · Capacity {service.capacity || "not set"}</small></div>
-       <div className="service-time"><span><Clock3 size={14}/><small>{t("passenger.leaves")}</small><b>{String(service.departure_time || "").slice(0, 5) || "—"}</b></span><span><Clock3 size={14}/><small>{t("passenger.arrives")}</small><b>{String(service.arrival_time || "").slice(0, 5) || "—"}</b></span><small>{service.bay_or_platform || t("passenger.platformPending")}</small></div>
-      <StatusBadge value={service.status}/><button className="icon-button" title={t("passenger.saveRoute")} aria-label={`${t("passenger.saveRoute")} ${service.service_number}`} data-testid={`save-route-${service.id}`} onClick={() => save(service)}><Bookmark size={17}/></button>
-        <button type="button" className="predict-button" onClick={() => predict(service)} disabled={busyId === service.id}><span>{busyId === service.id ? <span className="predicting-state"><span className="loading-ring"/> {t("passenger.predicting")}</span> : <><BrainCircuit size={16}/>{t("passenger.predictCrowd")}</>}</span></button>
+        <div className="service-time"><span><Clock3 size={14}/><small>{t("passenger.leaves")}</small><b>{formatTime12(service.departure_time)}</b></span><span><Clock3 size={14}/><small>{t("passenger.arrives")}</small><b>{formatTime12(service.arrival_time)}</b></span><small>{service.bay_or_platform || t("passenger.platformPending")}</small></div>
+       <StatusBadge value={service.status}/><button className="icon-button" title={t("passenger.saveRoute")} aria-label={`${t("passenger.saveRoute")} ${service.service_number}`} data-testid={`save-route-${service.id}`} onClick={event => { event.stopPropagation(); save(service); }}><Bookmark size={17}/></button>
+         <button type="button" className="predict-button" onClick={event => { event.stopPropagation(); predict(service); }} disabled={busyId === service.id}><span>{busyId === service.id ? <span className="predicting-state"><span className="loading-ring"/> {t("passenger.predicting")}</span> : <><BrainCircuit size={16}/>{t("passenger.predictCrowd")}</>}</span></button>
       {prediction[service.id] && <CrowdResult result={prediction[service.id]}/>}
-    </article>)}</div> : <EmptyState icon={BusFront} title={t("passenger.noMatching")} message={t("passenger.tryDifferent")} testId="transport-empty"/>}
+     </article>)}</div> : <EmptyState icon={BusFront} title={t("passenger.noMatching")} message={t("passenger.tryDifferent")} testId="transport-empty"/>}
+     {selectedService && <div className="service-detail-backdrop" role="presentation" onClick={() => setSelectedService(null)}><section className="service-detail-panel" role="dialog" aria-modal="true" aria-labelledby="service-detail-title" onClick={event => event.stopPropagation()}><button className="icon-button service-detail-close" onClick={() => setSelectedService(null)} aria-label="Close service details">×</button><span className="eyebrow">{selectedService.mode === "bus" ? "BUS SERVICE" : "RAILWAY SERVICE"} · VERIFIED SCHEDULE</span><h2 id="service-detail-title">{selectedService.service_name || selectedService.service_number}</h2><div className="service-detail-route"><span><small>Leaving from</small><b>{selectedService.origin || "—"}</b><strong>{formatTime12(selectedService.departure_time)}</strong></span><ArrowRight size={22}/><span><small>Arriving at</small><b>{selectedService.destination || "—"}</b><strong>{formatTime12(selectedService.arrival_time)}</strong></span></div><div className="service-detail-grid"><span><small>Service number</small><b>{selectedService.service_number || "—"}</b></span><span><small>Operating status</small><StatusBadge value={selectedService.status}/></span><span><small>Bay / platform</small><b>{selectedService.bay_or_platform || "Pending"}</b></span><span><small>Capacity</small><b>{selectedService.capacity || "Not set"}</b></span></div><div className="service-detail-note"><BrainCircuit size={17}/><span><b>Crowd prediction</b><small>Use the Predict crowd button on this service to view the latest verified crowd reading from the authority.</small></span></div></section></div>}
   </>;
-};
-
-const PredictionCenter = () => {
-  const predictions = useWorkspaceData(() => listCrowdPredictions(), []);
-  return <><SectionHeader eyebrow="PASSENGER · AI" title="AI crowd prediction" description="Predictions come from the server-side YOLO26n model and real CCTV frames only. Open Search to scan a frame from a bus or station service."/>{predictions.loading ? <LoadingState/> : predictions.error ? <ErrorState message={predictions.error}/> : predictions.data.length ? <div className="prediction-list">{predictions.data.map(item => <article key={item.id} data-testid={`crowd-prediction-${item.id}`}><span><b>{item.mahaflow_facilities?.name || "Transit facility"}</b><small>{item.zone} · {new Date(item.prediction_for).toLocaleString()}</small></span><strong>{item.predicted_count}</strong><StatusBadge value={item.crowd_level}/></article>)}</div> : <EmptyState icon={BrainCircuit} title="Ready for a real frame" message="Choose Search, find a service, and use Predict crowd. The server will return detections only when its YOLO .pt model is configured." testId="crowd-predictions-empty"/>}</>;
 };
 
 const CrowdMap = () => {
@@ -116,11 +114,11 @@ const SavedRoutes = ({ session }) => {
   return <><SectionHeader eyebrow={t("passenger.personalEyebrow")} title={t("passenger.savedRoutesTitle")} description={t("passenger.savedRoutesDescription")}/>{routes.loading ? <LoadingState label={t("common.loading")}/> : routes.error ? <ErrorState message={routes.error}/> : routes.data.length ? <div className="saved-grid">{routes.data.map(route => <article className="saved-card" key={route.route_id} data-testid={`saved-route-${route.route_id}`}><div className="service-mode">{route.mode === "railway" ? <TrainFront/> : <BusFront/>}</div><span><small>{route.service_number || route.mode}</small><b>{route.origin || t("passenger.from")} → {route.destination || route.route_id}</b></span><button className="icon-button" aria-label={t("passenger.removeSavedRoute")} data-testid={`delete-saved-route-${route.route_id}`} onClick={() => remove(route.route_id)}><Trash2 size={16}/></button></article>)}</div> : <EmptyState icon={Bookmark} title={t("passenger.noSavedRoutes")} message={t("passenger.noSavedRoutesMessage")} testId="saved-routes-empty"/>}</>;
 };
 
-export const PassengerWorkspace = ({ page, session, profile, theme, setTheme }) => {
+export const PassengerWorkspace = ({ page, session, profile, theme, setTheme, onSignOut }) => {
   if (page === "Search") return <TransportExplorer session={session}/>;
-  if (page === "AI crowd prediction") return <PredictionCenter/>;
+  if (page === "AI crowd prediction") return <CrowdPredictionPanel role="passenger" session={session} profile={profile}/>;
   if (page === "Crowd map") return <CrowdMap/>;
   if (page === "Saved routes") return <SavedRoutes session={session}/>;
-  if (page === "Settings") return <SettingsPanel {...{ role: "passenger", session, profile, theme, setTheme }}/>;
+  if (page === "Settings") return <SettingsPanel {...{ role: "passenger", session, profile, theme, setTheme, onSignOut }}/>;
   return null;
 };
