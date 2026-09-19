@@ -45,10 +45,10 @@ export const WorkspaceUtilities = ({ role, userId, setPage }) => {
     let active = true;
     const requests = role === "developer"
       ? Promise.all([listAuthorities()]).then(([authorities]) => ({ authorities }))
-      : Promise.all([listTransportServices(), listCrowdReadings(), role === "passenger" ? listSavedRoutes() : Promise.resolve([])]).then(([services, readings, savedRoutes]) => ({ services, readings, savedRoutes }));
+      : Promise.all([listTransportServices(), listCrowdReadings(), role === "passenger" ? listSavedRoutes(userId) : Promise.resolve([])]).then(([services, readings, savedRoutes]) => ({ services, readings, savedRoutes }));
     requests.then(payload => { if (active) setAlerts(makeAlerts(role, payload)); }).catch(() => { if (active) setAlerts([{ id: "unavailable", tone: "info", title: "Alerts unavailable", text: "Verified alert data is temporarily unavailable." }]); });
     return () => { active = false; };
-  }, [role]);
+  }, [role, userId]);
 
   const openNotifications = () => {
     const nextOpen = !open;

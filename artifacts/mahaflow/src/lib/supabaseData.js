@@ -63,6 +63,13 @@ export const listCrowdReadings = ({ ownerId, facilityId } = {}) => {
   return result(query);
 };
 
+export const listCrowdObservations = ({ ownerId, cameraId } = {}) => {
+  let query = supabase.from("crowd_data").select("*").order("captured_at", { ascending: false }).limit(200);
+  if (ownerId) query = query.eq("owner_user_id", ownerId);
+  if (cameraId) query = query.eq("camera_id", cameraId);
+  return result(query);
+};
+
 export const listCrowdPredictions = ({ ownerId } = {}) => {
   let query = supabase.from("mahaflow_crowd_predictions").select("*,mahaflow_facilities(name,latitude,longitude)").order("prediction_for").limit(40);
   if (ownerId) query = query.eq("owner_user_id", ownerId);

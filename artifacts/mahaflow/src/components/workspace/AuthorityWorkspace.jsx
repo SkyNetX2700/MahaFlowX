@@ -8,6 +8,8 @@ import { StreamPlayer } from "@/components/workspace/StreamPlayer";
 import { SettingsPanel } from "@/components/workspace/SettingsPanel";
 
 const emptyCamera = { camera_id: "", name: "", zone: "", stream_url: "", protocol: "HLS", detection_enabled: true };
+const cctvBackendUrl = import.meta.env.VITE_CCTV_BACKEND_URL || import.meta.env.VITE_BACKEND_URL || "";
+const cctvEndpoint = cctvBackendUrl ? `${cctvBackendUrl.replace(/\/$/, "")}/cctv` : "/api/cctv";
 
 const fileAsBase64 = file => new Promise((resolve, reject) => {
   const reader = new FileReader();
@@ -54,6 +56,14 @@ const CameraInference = ({ camera }) => {
   </div>;
 };
 
+const CctvAnalysisSummary = ({ camera, result, busy, error, onAnalyze }) => <div className="cctv-url-analysis">
+  <button type="button" className="outline-button" onClick={() => onAnalyze(camera)} disabled={busy || !camera.stream_url} data-testid={`cctv-analyze-url-${camera.id}`}>
+    {busy ? <><span className="loading-ring loading-ring-dark"/> Analyzing URL…</> : "Analyze CCTV URL"}
+  </button>
+  {result && <div className="cctv-analysis-result" data-testid={`cctv-analysis-result-${camera.id}`}><div><StatusBadge value={result.crowd_level}/><b>{result.current_head_count} current heads</b></div><dl><span><dt>3-day average</dt><dd>{result.three_day_average ?? "Not enough history"}</dd></span><span><dt>Average scan</dt><dd>{result.average_crowd}</dd></span><span><dt>Peak</dt><dd>{result.peak_crowd}</dd></span><span><dt>Measurements</dt><dd>{result.measurements}</dd></span></dl><small>Fixed comparison: below 80% Low · 80–120% Normal · above 120% High</small></div>}
+  {error && <small className="camera-inference-error" data-testid={`cctv-analysis-error-${camera.id}`}>{error}</small>}
+</div>;
+
 const CctvManager = ({ session, profile }) => {
   const cameras = useWorkspaceData(() => listCameras(session.user.id), [session.user.id]);
   const facilities = useWorkspaceData(() => listFacilities(), []);
@@ -62,6 +72,9 @@ const CctvManager = ({ session, profile }) => {
   const [editingId, setEditingId] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [analysisBusyId, setAnalysisBusyId] = useState("");
+  const [analysisResults, setAnalysisResults] = useState({});
+  const [analysisErrors, setAnalysisErrors] = useState({});
   const set = (key, value) => setForm(current => ({ ...current, [key]: value }));
   const reset = () => { setForm(emptyCamera); setEditingId(""); };
   const save = async event => {
@@ -76,7 +89,29 @@ const CctvManager = ({ session, profile }) => {
   };
   const edit = camera => { setEditingId(camera.id); setForm({ camera_id: camera.camera_id || "", name: camera.name || "", zone: camera.zone || "", stream_url: camera.stream_url || "", protocol: camera.protocol || "HLS", detection_enabled: camera.detection_enabled !== false }); };
   const remove = async id => { await deleteCamera(id); await cameras.reload(); };
-  return <><SectionHeader eyebrow="AUTHORITY · SECURE VIDEO" title="CCTV cameras" description="Register real HLS, WebRTC, or RTSP endpoints. The assigned facility location is filled from your authority access code." action={<span className="live-dot"><i/> {cameras.data.filter(item => item.status === "online").length} online</span>}/><div className="camera-workspace"><form className="data-form" onSubmit={save}><h3>{editingId ? "Edit camera" : "Add camera"}</h3><p>Stream URLs remain protected by owner-level RLS. No address or location entry is required.</p><div className="verified-facility camera-facility"><MapPin size={16}/><span><b>{facility?.name || "Assigned facility"}</b><small>{facility?.address || "Facility address is loaded from the registered authority location."}</small></span></div><label>Camera ID<input value={form.camera_id} onChange={event => set("camera_id", event.target.value)} data-testid="camera-id-input" placeholder="CAM-ENTRANCE-01" required/></label><label>Display name<input value={form.name} onChange={event => set("name", event.target.value)} data-testid="camera-name-input" required/></label><label>Zone<input value={form.zone} onChange={event => set("zone", event.target.value)} data-testid="camera-zone-input" placeholder="Main entrance" required/></label><label>Protocol<select value={form.protocol} onChange={event => set("protocol", event.target.value)} data-testid="camera-protocol-select"><option>HLS</option><option>WEBRTC</option><option>RTSP</option></select></label><label>Secure stream URL<input type="url" value={form.stream_url} onChange={event => set("stream_url", event.target.value)} data-testid="camera-stream-url-input" placeholder="https://…/stream.m3u8" required/></label><label className="check"><input type="checkbox" checked={form.detection_enabled} onChange={event => set("detection_enabled", event.target.checked)} data-testid="camera-detection-checkbox"/><span>Enable YOLO26n processing when worker connects</span></label><div className="form-actions"><button className="primary-button" data-testid="cctv-add-stream-button" disabled={busy}>{editingId ? <Check size={17}/> : <Plus size={17}/>} {busy ? "Saving…" : editingId ? "Save camera" : "Add camera"}</button>{editingId && <button type="button" className="outline-button" onClick={reset}><X size={15}/>Cancel</button>}</div>{message && <div className="notice-line" data-testid="camera-form-message">{message}</div>}</form><div className="real-camera-grid">{cameras.loading ? <LoadingState/> : cameras.error ? <ErrorState message={cameras.error}/> : cameras.data.length ? cameras.data.map(camera => <article className="real-camera-card" key={camera.id} data-testid={`camera-card-${camera.id}`}><StreamPlayer camera={camera}/><div className="camera-meta"><span><b>{camera.name}</b><small>{camera.camera_id} · {camera.zone} · {camera.station || facility?.name || "Assigned facility"}</small></span><StatusBadge value={camera.status}/><button className="icon-button" aria-label={`Edit ${camera.name}`} data-testid={`camera-edit-${camera.id}`} onClick={() => edit(camera)}><Edit3 size={16}/></button><button className="icon-button" aria-label={`Delete ${camera.name}`} data-testid={`camera-delete-${camera.id}`} onClick={() => remove(camera.id)}><Trash2 size={16}/></button></div><div className="camera-tech"><span>{camera.protocol}</span><span>{camera.detection_enabled ? "AI enabled" : "AI paused"}</span><span>{camera.last_seen_at ? new Date(camera.last_seen_at).toLocaleString() : "Awaiting first signal"}</span></div><CameraInference camera={camera}/></article>) : <EmptyState icon={Camera} title="No cameras registered" message="Add your first real stream endpoint using the form." testId="cameras-empty"/>}</div></div></>;
+  const analyzeUrl = async camera => {
+    if (!camera.stream_url || analysisBusyId) return;
+    setAnalysisBusyId(camera.id);
+    setAnalysisErrors(current => ({ ...current, [camera.id]: "" }));
+    try {
+      const response = await fetch(cctvEndpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(session.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ camera_id: camera.camera_id || camera.id, zone: camera.zone, stream_url: camera.stream_url, max_seconds: 30, sample_interval_seconds: 2 }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "CCTV analysis failed.");
+      setAnalysisResults(current => ({ ...current, [camera.id]: body }));
+    } catch (error) {
+      setAnalysisErrors(current => ({ ...current, [camera.id]: error.message || "CCTV analysis failed." }));
+    } finally {
+      setAnalysisBusyId("");
+    }
+  };
+  return <><SectionHeader eyebrow="AUTHORITY · SECURE VIDEO" title="CCTV cameras" description="Register real HLS, WebRTC, or RTSP endpoints. The assigned facility location is filled from your authority access code." action={<span className="live-dot"><i/> {cameras.data.filter(item => item.status === "online").length} online</span>}/><div className="camera-workspace"><form className="data-form" onSubmit={save}><h3>{editingId ? "Edit camera" : "Add camera"}</h3><p>Stream URLs remain protected by owner-level RLS. No address or location entry is required.</p><div className="verified-facility camera-facility"><MapPin size={16}/><span><b>{facility?.name || "Assigned facility"}</b><small>{facility?.address || "Facility address is loaded from the registered authority location."}</small></span></div><label>Camera ID<input value={form.camera_id} onChange={event => set("camera_id", event.target.value)} data-testid="camera-id-input" placeholder="CAM-ENTRANCE-01" required/></label><label>Display name<input value={form.name} onChange={event => set("name", event.target.value)} data-testid="camera-name-input" required/></label><label>Zone<input value={form.zone} onChange={event => set("zone", event.target.value)} data-testid="camera-zone-input" placeholder="Main entrance" required/></label><label>Protocol<select value={form.protocol} onChange={event => set("protocol", event.target.value)} data-testid="camera-protocol-select"><option>HLS</option><option>WEBRTC</option><option>RTSP</option></select></label><label>Secure stream URL<input type="url" value={form.stream_url} onChange={event => set("stream_url", event.target.value)} data-testid="camera-stream-url-input" placeholder="https://…/stream.m3u8" required/></label><label className="check"><input type="checkbox" checked={form.detection_enabled} onChange={event => set("detection_enabled", event.target.checked)} data-testid="camera-detection-checkbox"/><span>Enable YOLO26n processing when worker connects</span></label><div className="form-actions"><button className="primary-button" data-testid="cctv-add-stream-button" disabled={busy}>{editingId ? <Check size={17}/> : <Plus size={17}/>} {busy ? "Saving…" : editingId ? "Save camera" : "Add camera"}</button>{editingId && <button type="button" className="outline-button" onClick={reset}><X size={15}/>Cancel</button>}</div>{message && <div className="notice-line" data-testid="camera-form-message">{message}</div>}</form><div className="real-camera-grid">{cameras.loading ? <LoadingState/> : cameras.error ? <ErrorState message={cameras.error}/> : cameras.data.length ? cameras.data.map(camera => <article className="real-camera-card" key={camera.id} data-testid={`camera-card-${camera.id}`}><StreamPlayer camera={camera}/><div className="camera-meta"><span><b>{camera.name}</b><small>{camera.camera_id} · {camera.zone} · {camera.station || facility?.name || "Assigned facility"}</small></span><StatusBadge value={camera.status}/><button className="icon-button" aria-label={`Edit ${camera.name}`} data-testid={`camera-edit-${camera.id}`} onClick={() => edit(camera)}><Edit3 size={16}/></button><button className="icon-button" aria-label={`Delete ${camera.name}`} data-testid={`camera-delete-${camera.id}`} onClick={() => remove(camera.id)}><Trash2 size={16}/></button></div><div className="camera-tech"><span>{camera.protocol}</span><span>{camera.detection_enabled ? "AI enabled" : "AI paused"}</span><span>{camera.last_seen_at ? formatDateTime12(camera.last_seen_at) : "Awaiting first signal"}</span></div><CameraInference camera={camera}/><CctvAnalysisSummary camera={camera} result={analysisResults[camera.id]} busy={analysisBusyId === camera.id} error={analysisErrors[camera.id]} onAnalyze={analyzeUrl}/></article>) : <EmptyState icon={Camera} title="No cameras registered" message="Add your first real stream endpoint using the form." testId="cameras-empty"/>}</div></div></>;
 };
 
 const emptyTransport = { service_number: "", service_name: "", origin: "", destination: "", departure: "", arrival: "", bay: "", capacity: "", vehicle: "", driver: "", status: "scheduled" };

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { ArrowRight, Bookmark, BrainCircuit, BusFront, Clock3, MapPin, Navigation, Search, TrainFront, Trash2, Users } from "lucide-react";
 import MapView from "@/components/MapView";
-import { deleteSavedRoute, listCrowdPredictions, listCrowdReadings, listFacilities, listSavedRoutes, listTransportServices, saveRoute } from "@/lib/supabaseData";
+import { deleteSavedRoute, listCrowdObservations, listCrowdPredictions, listCrowdReadings, listFacilities, listSavedRoutes, listTransportServices, saveRoute } from "@/lib/supabaseData";
 import { useWorkspaceData } from "@/hooks/useWorkspaceData";
 import { EmptyState, ErrorState, LoadingState, SectionHeader, StatusBadge, formatDateTime12, formatTime12 } from "@/components/workspace/WorkspaceUI";
 import { SettingsPanel } from "@/components/workspace/SettingsPanel";
@@ -35,10 +35,19 @@ const TransportExplorer = ({ session }) => {
     const matchesQuery = [item.service_number, item.service_name, item.vehicle_registration].join(" ").toLowerCase().includes(query.toLowerCase());
     const matchesFrom = String(item.origin || "").toLowerCase().includes(fromQuery.toLowerCase());
     const matchesDestination = String(item.destination || "").toLowerCase().includes(destinationQuery.toLowerCase());
-    const serviceDate = String(item.service_date || item.created_at || "").slice(0, 10);
-    const matchesDate = !date || serviceDate === date;
-    const matchesTime = !time || String(item.departure_time || "").slice(0, 5) === time;
-    return matchesMode && matchesQuery && matchesFrom && matchesDestination && matchesDate && matchesTime;
+    const serviceDate = String(item.service_date || "").slice(0, 10);
+    const isRecurring = !serviceDate;
+    const matchesDate = !date || isRecurring || serviceDate === date;
+    const status = String(item.status || "").toLowerCase();
+    const excludedForDate = Boolean(date && serviceDate === date && ["cancelled", "canceled", "delayed"].includes(status));
+    const departureMinutes = toMinutes(item.departure_time);
+    const requestedMinutes = toMinutes(time);
+    const matchesTime = !time || departureMinutes === null || (requestedMinutes !== null && Math.abs(departureMinutes - requestedMinutes) <= 90);
+    return matchesMode && matchesQuery && matchesFrom && matchesDestination && matchesDate && !excludedForDate && matchesTime;
+  }).sort((left, right) => {
+    if (!time) return 0;
+    const target = toMinutes(time);
+    return Math.abs((toMinutes(left.departure_time) ?? target) - target) - Math.abs((toMinutes(right.departure_time) ?? target) - target);
   }), [services.data, query, fromQuery, destinationQuery, date, time, mode]);
 
   const save = async service => {
@@ -49,8 +58,12 @@ const TransportExplorer = ({ session }) => {
   const predict = async service => {
     setBusyId(service.id); setMessage("");
     try {
-      const readings = await listCrowdReadings({ facilityId: service.facility_id });
-      const latest = readings.find(item => item.zone === service.origin || item.zone === service.destination) || readings[0];
+      const [readings, observations] = await Promise.all([
+        listCrowdReadings({ facilityId: service.facility_id }),
+        listCrowdObservations({ ownerId: session.user.id }),
+      ]);
+      const observation = observations.find(item => item.camera_id === service.camera_id || item.zone === service.origin || item.zone === service.destination);
+      const latest = readings.find(item => item.zone === service.origin || item.zone === service.destination) || readings[0] || (observation ? { people_count: observation.head_count, crowd_level: observation.crowd_level, zone: observation.zone } : null);
       if (!latest) {
         throw new Error("The authority video has not published a crowd reading for this service yet.");
       }
@@ -90,6 +103,12 @@ const TransportExplorer = ({ session }) => {
      </article>)}</div> : <EmptyState icon={BusFront} title={t("passenger.noMatching")} message={t("passenger.tryDifferent")} testId="transport-empty"/>}
      {selectedService && <div className="service-detail-backdrop" role="presentation" onClick={() => setSelectedService(null)}><section className="service-detail-panel" role="dialog" aria-modal="true" aria-labelledby="service-detail-title" onClick={event => event.stopPropagation()}><button className="icon-button service-detail-close" onClick={() => setSelectedService(null)} aria-label="Close service details">×</button><span className="eyebrow">{selectedService.mode === "bus" ? "BUS SERVICE" : "RAILWAY SERVICE"} · VERIFIED SCHEDULE</span><h2 id="service-detail-title">{selectedService.service_name || selectedService.service_number}</h2><div className="service-detail-route"><span><small>Leaving from</small><b>{selectedService.origin || "—"}</b><strong>{formatTime12(selectedService.departure_time)}</strong></span><ArrowRight size={22}/><span><small>Arriving at</small><b>{selectedService.destination || "—"}</b><strong>{formatTime12(selectedService.arrival_time)}</strong></span></div><div className="service-detail-grid"><span><small>Service number</small><b>{selectedService.service_number || "—"}</b></span><span><small>Operating status</small><StatusBadge value={selectedService.status}/></span><span><small>Bay / platform</small><b>{selectedService.bay_or_platform || "Pending"}</b></span><span><small>Capacity</small><b>{selectedService.capacity || "Not set"}</b></span></div><div className="service-detail-note"><BrainCircuit size={17}/><span><b>Crowd prediction</b><small>Use the Predict crowd button on this service to view the latest verified crowd reading from the authority.</small></span></div></section></div>}
   </>;
+};
+
+const toMinutes = value => {
+  const match = String(value || "").slice(0, 5).match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
 };
 
 const CrowdMap = () => {
