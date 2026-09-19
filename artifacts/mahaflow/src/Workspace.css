@@ -101,7 +101,8 @@
   .crowd-result{grid-column:2 / -1;flex-wrap:wrap}
 }
 
-.workspace-utilities{position:fixed;top:24px;right:32px;z-index:8;display:flex;align-items:center;gap:11px}
+.workspace-main{position:relative}
+.workspace-utilities{position:fixed;top:18px;right:22px;z-index:20;display:flex;align-items:center;gap:11px}
 .notification-wrap{position:relative}
 .notification-button{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:#fff;color:#667592;display:grid;place-items:center;position:relative;box-shadow:0 8px 24px #13244b12}
 .notification-button.selected,.notification-button:hover{color:#4938af;background:#f3efff;border-color:#d9cff8}

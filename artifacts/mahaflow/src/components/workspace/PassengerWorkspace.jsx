@@ -60,7 +60,7 @@ const TransportExplorer = ({ session }) => {
     try {
       const [readings, observations] = await Promise.all([
         listCrowdReadings({ facilityId: service.facility_id }),
-        listCrowdObservations({ ownerId: session.user.id }),
+        listCrowdObservations({ ownerId: session.user.id }).catch(() => []),
       ]);
       const observation = observations.find(item => item.camera_id === service.camera_id || item.zone === service.origin || item.zone === service.destination);
       const latest = readings.find(item => item.zone === service.origin || item.zone === service.destination) || readings[0] || (observation ? { people_count: observation.head_count, crowd_level: observation.crowd_level, zone: observation.zone } : null);
